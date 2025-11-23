@@ -1,0 +1,7 @@
+{
+  "name": "ProBet Tracker",
+  "description": "A professional sports betting bankroll tracker with automated payout calculations, performance analytics, and dark-mode UI.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
