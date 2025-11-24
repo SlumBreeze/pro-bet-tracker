@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { PlusCircle, Calculator, DollarSign, Camera, Loader2, Sparkles } from 'lucide-react';
 import { GoogleGenAI, Type, SchemaShared } from "@google/genai";
 import { Sportsbook, BetStatus } from '../types';
 import { calculatePotentialProfit, formatCurrency } from '../utils/calculations';
-import { SPORTSBOOKS } from '../constants';
+import { SPORTSBOOKS, SPORTS } from '../constants';
 
 interface BetFormProps {
   onAddBet: (betData: any) => void;
@@ -21,6 +22,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
 
   const [date, setDate] = useState(getTodayString());
   const [matchup, setMatchup] = useState('');
+  const [sport, setSport] = useState('NFL');
   const [sportsbook, setSportsbook] = useState<Sportsbook>(Sportsbook.DRAFTKINGS);
   const [pick, setPick] = useState('');
   const [odds, setOdds] = useState<number | ''>(-110);
@@ -46,6 +48,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
     onAddBet({
       date,
       matchup,
+      sport,
       sportsbook,
       pick,
       odds: Number(odds),
@@ -54,7 +57,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
       status: BetStatus.PENDING,
     });
 
-    // Reset fields except date/sportsbook which might remain constant for session
+    // Reset fields except date/sportsbook/sport which might remain constant for session
     setMatchup('');
     setPick('');
     setWager('');
@@ -100,6 +103,11 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
             type: Type.STRING, 
             description: "The two teams or players competing (e.g., 'Lakers vs Celtics')." 
           },
+          sport: {
+            type: Type.STRING,
+            enum: SPORTS,
+            description: "The league or sport (e.g. NFL, NBA, MLB). Infer based on team names if not explicit."
+          },
           sportsbook: { 
             type: Type.STRING, 
             enum: SPORTSBOOKS,
@@ -118,7 +126,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
             description: "The wager amount in dollars (numeric only)." 
           }
         },
-        required: ["matchup", "pick", "odds", "wager", "sportsbook"]
+        required: ["matchup", "pick", "odds", "wager", "sportsbook", "sport"]
       };
 
       // 4. Call the model
@@ -151,6 +159,10 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
         if (result.wager) setWager(result.wager);
         if (result.date) setDate(result.date);
         
+        if (result.sport && SPORTS.includes(result.sport)) {
+           setSport(result.sport);
+        }
+
         // Find matching sportsbook or default to 'Other'
         if (result.sportsbook && SPORTSBOOKS.includes(result.sportsbook)) {
           setSportsbook(result.sportsbook as Sportsbook);
@@ -224,8 +236,22 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
             />
           </div>
 
-          {/* Sportsbook */}
+          {/* Sport / League */}
           <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-400 uppercase">League</label>
+            <select
+              value={sport}
+              onChange={(e) => setSport(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-white appearance-none"
+            >
+              {SPORTS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sportsbook */}
+          <div className="space-y-1.5 md:col-span-2">
             <label className="text-xs font-semibold text-slate-400 uppercase">Sportsbook</label>
             <select
               value={sportsbook}

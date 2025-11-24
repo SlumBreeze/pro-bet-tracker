@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, Wallet, TrendingUp, Percent, ArrowUpRight, ArrowDownRight, History, Settings, CloudCheck } from 'lucide-react';
-import { Bet, BetStatus, BankrollState } from './types';
-import { calculateBankrollStats, formatCurrency } from './utils/calculations';
+import { LayoutDashboard, Wallet, TrendingUp, Percent, ArrowUpRight, ArrowDownRight, History, Settings, CloudCheck, Scale, BarChart3, Activity } from 'lucide-react';
+import { Bet, BetStatus, BankrollState, AdvancedStats } from './types';
+import { calculateBankrollStats, calculateAdvancedStats, formatCurrency, inferSportFromBet } from './utils/calculations';
 import { StatsCard } from './components/StatsCard';
 import { BetForm } from './components/BetForm';
 import { BetList } from './components/BetList';
 import { BankrollModal } from './components/BankrollModal';
 import { DataManagementModal } from './components/DataManagementModal';
+import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 
 const STORAGE_KEY = 'probet_data_v1';
 
@@ -15,6 +17,7 @@ const App: React.FC = () => {
   const [startingBankroll, setStartingBankroll] = useState<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(true);
 
   // Load data from local storage on mount
   useEffect(() => {
@@ -22,7 +25,15 @@ const App: React.FC = () => {
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
-        setBets(parsed.bets || []);
+        let loadedBets = parsed.bets || [];
+        
+        // Migration: Add sport if missing using inference, or retry if 'Other'
+        loadedBets = loadedBets.map((b: any) => ({
+           ...b,
+           sport: (b.sport && b.sport !== 'Other') ? b.sport : inferSportFromBet(b)
+        }));
+
+        setBets(loadedBets);
         if (parsed.startingBankroll !== undefined && parsed.startingBankroll !== null) {
           setStartingBankroll(Number(parsed.startingBankroll));
         }
@@ -46,6 +57,10 @@ const App: React.FC = () => {
   const bankrollStats: BankrollState = useMemo(() => {
     return calculateBankrollStats(startingBankroll || 0, bets);
   }, [bets, startingBankroll]);
+
+  const advancedStats: AdvancedStats = useMemo(() => {
+    return calculateAdvancedStats(bets);
+  }, [bets]);
 
   const handleAddBet = (betData: Omit<Bet, 'id' | 'createdAt'>) => {
     const newBet: Bet = {
@@ -78,7 +93,13 @@ const App: React.FC = () => {
     const isCleanState = bets.length === 0;
 
     if (isCleanState || confirm(`Found ${data.bets.length} bets. This will replace your current betting log. Continue?`)) {
-      setBets(data.bets);
+      // Process bets to ensure sport field exists
+      const processedBets = data.bets.map((b: any) => ({
+        ...b,
+        sport: (b.sport && b.sport !== 'Other') ? b.sport : inferSportFromBet(b)
+      }));
+
+      setBets(processedBets);
       if (data.startingBankroll !== undefined && data.startingBankroll !== null) {
         setStartingBankroll(data.startingBankroll);
       }
@@ -139,7 +160,7 @@ const App: React.FC = () => {
         ) : (
           <>
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <StatsCard 
                 label="Bankroll" 
                 value={formatCurrency(bankrollStats.currentBalance)}
@@ -149,11 +170,18 @@ const App: React.FC = () => {
                 highlight
               />
               <StatsCard 
-                label="ROI" 
+                label="Actual ROI" 
                 value={`${bankrollStats.roi.toFixed(2)}%`}
-                subValue="Return on Investment"
+                subValue="Money Weighted"
                 trend={bankrollStats.roi > 0 ? 'up' : bankrollStats.roi < 0 ? 'down' : 'neutral'}
                 icon={<Percent size={20} />}
+              />
+              <StatsCard 
+                label="Flat ROI" 
+                value={`${bankrollStats.flatROI.toFixed(2)}%`}
+                subValue="Unit Weighted (Skill)"
+                trend={bankrollStats.flatROI > 0 ? 'up' : bankrollStats.flatROI < 0 ? 'down' : 'neutral'}
+                icon={<Scale size={20} />}
               />
               <StatsCard 
                 label="Record" 
@@ -162,13 +190,24 @@ const App: React.FC = () => {
                 trend="neutral"
                 icon={<History size={20} />}
               />
-              <StatsCard 
+               <StatsCard 
                 label="Total Handle" 
                 value={formatCurrency(bankrollStats.totalWagered)}
                 subValue={`${bets.filter(b => b.status === BetStatus.PENDING).length} Pending Bets`}
                 trend="neutral"
-                icon={<LayoutDashboard size={20} />}
+                icon={<BarChart3 size={20} />}
               />
+            </div>
+
+            {/* Streak & Analytics Section */}
+            <div className="border-t border-slate-800 pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Activity size={20} className="text-emerald-400" />
+                  Performance Analytics
+                </h3>
+              </div>
+              <AnalyticsDashboard stats={advancedStats} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -182,9 +221,13 @@ const App: React.FC = () => {
                     <h4 className="text-emerald-400 font-bold text-sm mb-2 flex items-center gap-2">
                       <TrendingUp size={14} /> Smart Betting Tip
                     </h4>
-                    <p className="text-slate-400 text-sm leading-relaxed">
-                      Always shop for the best lines. A difference of half a point or +5 on the odds can significantly impact your long-term ROI.
+                    <p className="text-slate-400 text-sm leading-relaxed mb-2">
+                      <span className="text-white font-medium">Actual vs. Flat ROI:</span>
                     </p>
+                    <ul className="text-xs text-slate-500 space-y-1 list-disc pl-4">
+                        <li>If <b>Actual {'>'} Flat</b>: Your bet sizing is excellent (you bet more on winning plays).</li>
+                        <li>If <b>Flat {'>'} Actual</b>: You are picking well but losing money on big bets. Consider flat betting.</li>
+                    </ul>
                   </div>
                 </div>
               </div>
