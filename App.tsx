@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, Wallet, TrendingUp, Percent, ArrowUpRight, ArrowDownRight, History, Settings, CloudCheck, Scale, BarChart3, Activity } from 'lucide-react';
+import { Wallet, TrendingUp, Percent, BarChart3, Activity, Settings, History } from 'lucide-react';
 import { Bet, BetStatus, BankrollState, AdvancedStats } from './types';
 import { calculateBankrollStats, calculateAdvancedStats, formatCurrency, inferSportFromBet } from './utils/calculations';
 import { StatsCard } from './components/StatsCard';
@@ -16,23 +16,20 @@ const App: React.FC = () => {
   const [bets, setBets] = useState<Bet[]>([]);
   const [startingBankroll, setStartingBankroll] = useState<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [showAnalytics, setShowAnalytics] = useState(true);
+  const [isDataModalOpen, setIsDataModalOpen] = useState(false);
 
-  // Load data from local storage on mount
+  // 1. Load Local Data on Mount
   useEffect(() => {
     const savedData = localStorage.getItem(STORAGE_KEY);
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
         let loadedBets = parsed.bets || [];
-        
-        // Migration: Add sport if missing using inference, or retry if 'Other'
+        // Migration: Add sport if missing using inference
         loadedBets = loadedBets.map((b: any) => ({
            ...b,
            sport: (b.sport && b.sport !== 'Other') ? b.sport : inferSportFromBet(b)
         }));
-
         setBets(loadedBets);
         if (parsed.startingBankroll !== undefined && parsed.startingBankroll !== null) {
           setStartingBankroll(Number(parsed.startingBankroll));
@@ -44,14 +41,13 @@ const App: React.FC = () => {
     setIsLoaded(true);
   }, []);
 
-  // Save data whenever state changes
+  // 2. Save Changes (Local Storage)
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        bets,
-        startingBankroll
-      }));
-    }
+    if (!isLoaded) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      bets,
+      startingBankroll
+    }));
   }, [bets, startingBankroll, isLoaded]);
 
   const bankrollStats: BankrollState = useMemo(() => {
@@ -83,22 +79,16 @@ const App: React.FC = () => {
   };
 
   const handleDeleteBet = (id: string) => {
-    // Confirmation is now handled in the BetList UI component
     setBets(prev => prev.filter(b => b.id !== id));
   };
 
   const handleImportData = (data: { bets: Bet[], startingBankroll?: number }) => {
-    // If the app is currently "empty" (no bets, or just starting bankroll set but no action), 
-    // allow import without confirmation to make it smoother for the user.
     const isCleanState = bets.length === 0;
-
     if (isCleanState || confirm(`Found ${data.bets.length} bets. This will replace your current betting log. Continue?`)) {
-      // Process bets to ensure sport field exists
       const processedBets = data.bets.map((b: any) => ({
         ...b,
         sport: (b.sport && b.sport !== 'Other') ? b.sport : inferSportFromBet(b)
       }));
-
       setBets(processedBets);
       if (data.startingBankroll !== undefined && data.startingBankroll !== null) {
         setStartingBankroll(data.startingBankroll);
@@ -111,8 +101,8 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-950 pb-20 flex flex-col">
       <DataManagementModal 
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        isOpen={isDataModalOpen}
+        onClose={() => setIsDataModalOpen(false)}
         onImport={handleImportData}
         currentData={{ bets, startingBankroll }}
       />
@@ -141,13 +131,15 @@ const App: React.FC = () => {
              
              <div className="w-px h-8 bg-slate-800 hidden sm:block"></div>
 
-             <button
-               onClick={() => setIsSettingsOpen(true)}
-               className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all border border-transparent hover:border-slate-600"
-               title="Data Settings (Backup/Restore)"
-             >
-               <Settings size={20} />
-             </button>
+             <div className="flex gap-2">
+                <button
+                  onClick={() => setIsDataModalOpen(true)}
+                  className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all border border-transparent hover:border-slate-600"
+                  title="Settings & Backup"
+                >
+                  <Settings size={20} />
+                </button>
+             </div>
           </div>
         </div>
       </header>
@@ -181,7 +173,7 @@ const App: React.FC = () => {
                 value={`${bankrollStats.flatROI.toFixed(2)}%`}
                 subValue="Unit Weighted (Skill)"
                 trend={bankrollStats.flatROI > 0 ? 'up' : bankrollStats.flatROI < 0 ? 'down' : 'neutral'}
-                icon={<Scale size={20} />}
+                icon={<Activity size={20} />}
               />
               <StatsCard 
                 label="Record" 
@@ -249,11 +241,7 @@ const App: React.FC = () => {
       {/* Footer / Status Bar */}
       <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full text-center sm:text-left">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-             <p>© 2024 ProBet Tracker. All data stored locally.</p>
-             <div className="flex items-center gap-2 px-3 py-1 bg-slate-900 rounded-full border border-slate-800">
-                <CloudCheck size={14} className="text-emerald-500" />
-                <span>Auto-saved to device</span>
-             </div>
+             <p>© 2024 ProBet Tracker. Data stored locally.</p>
           </div>
       </footer>
     </div>
