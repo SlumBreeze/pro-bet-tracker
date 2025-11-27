@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { Wallet, TrendingUp, Percent, BarChart3, Activity, Settings, History } from 'lucide-react';
+import { Wallet, TrendingUp, Percent, BarChart3, Activity, Settings, History, Edit2 } from 'lucide-react';
 import { Bet, BetStatus, BankrollState, AdvancedStats } from './types';
 import { calculateBankrollStats, calculateAdvancedStats, formatCurrency, inferSportFromBet } from './utils/calculations';
 import { StatsCard } from './components/StatsCard';
@@ -17,6 +16,7 @@ const App: React.FC = () => {
   const [startingBankroll, setStartingBankroll] = useState<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
+  const [isBankrollModalOpen, setIsBankrollModalOpen] = useState(false);
 
   // 1. Load Local Data on Mount
   useEffect(() => {
@@ -41,7 +41,14 @@ const App: React.FC = () => {
     setIsLoaded(true);
   }, []);
 
-  // 2. Save Changes (Local Storage)
+  // 2. Initial Setup Modal Trigger
+  useEffect(() => {
+    if (isLoaded && startingBankroll === null) {
+      setIsBankrollModalOpen(true);
+    }
+  }, [isLoaded, startingBankroll]);
+
+  // 3. Save Changes (Local Storage)
   useEffect(() => {
     if (!isLoaded) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -96,6 +103,11 @@ const App: React.FC = () => {
     }
   };
 
+  const handleSetBankroll = (amount: number) => {
+    setStartingBankroll(amount);
+    setIsBankrollModalOpen(false);
+  };
+
   if (!isLoaded) return null;
 
   return (
@@ -105,6 +117,14 @@ const App: React.FC = () => {
         onClose={() => setIsDataModalOpen(false)}
         onImport={handleImportData}
         currentData={{ bets, startingBankroll }}
+      />
+
+      <BankrollModal 
+        isOpen={isBankrollModalOpen}
+        onClose={() => setIsBankrollModalOpen(false)}
+        onSetBankroll={handleSetBankroll}
+        currentStartingBankroll={startingBankroll}
+        currentBalance={bankrollStats.currentBalance}
       />
 
       {/* Header */}
@@ -120,16 +140,27 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-             <div className="text-right hidden sm:block">
-               <p className="text-xs text-slate-500 uppercase font-bold">Current Balance</p>
-               <p className={`font-mono font-bold text-lg ${
-                 bankrollStats.currentBalance >= (startingBankroll || 0) ? 'text-emerald-400' : 'text-rose-400'
-               }`}>
-                 {formatCurrency(bankrollStats.currentBalance)}
-               </p>
-             </div>
+             {startingBankroll !== null && (
+               <div className="text-right hidden sm:block">
+                 <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Current Balance</p>
+                 <div className="flex items-center justify-end gap-2">
+                    <p className={`font-mono font-bold text-lg leading-none ${
+                      bankrollStats.currentBalance >= (startingBankroll || 0) ? 'text-emerald-400' : 'text-rose-400'
+                    }`}>
+                      {formatCurrency(bankrollStats.currentBalance)}
+                    </p>
+                    <button 
+                      onClick={() => setIsBankrollModalOpen(true)}
+                      className="p-1 rounded-md text-slate-600 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all"
+                      title="Manage Bankroll"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                 </div>
+               </div>
+             )}
              
-             <div className="w-px h-8 bg-slate-800 hidden sm:block"></div>
+             {startingBankroll !== null && <div className="w-px h-8 bg-slate-800 hidden sm:block"></div>}
 
              <div className="flex gap-2">
                 <button
@@ -147,9 +178,7 @@ const App: React.FC = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 flex-grow">
         
-        {startingBankroll === null ? (
-          <BankrollModal onSetBankroll={setStartingBankroll} />
-        ) : (
+        {startingBankroll !== null && (
           <>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
