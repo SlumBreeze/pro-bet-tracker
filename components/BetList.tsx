@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Trash2, TrendingUp, TrendingDown, MinusCircle, Edit2, Save, X, Check, ChevronDown, ChevronRight, Calendar } from 'lucide-react';
 import { Bet, BetStatus, Sportsbook } from '../types';
@@ -149,7 +150,9 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-white">Recent Activity</h3>
-        <span className="text-slate-500 text-sm">{bets.length} Total Bets</span>
+        <div className="flex items-center gap-2">
+            <span className="text-slate-500 text-sm">{bets.length} Total Bets</span>
+        </div>
       </div>
 
       <div className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
@@ -291,9 +294,9 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                         // Display Mode
                         <>
                           <td className="px-4 py-2 align-top">
-                            <div className="flex flex-col">
+                            <div className="flex flex-col items-start">
                               <span className="text-white font-medium text-sm leading-tight break-words">{bet.matchup}</span>
-                              <span className="text-slate-400 text-xs leading-tight break-words mt-0.5">{bet.pick}</span>
+                              <span className="text-slate-400 text-xs leading-tight break-words mt-1">{bet.pick}</span>
                               <div className="sm:hidden mt-1.5">
                                 <span 
                                   className="text-[10px] font-bold uppercase tracking-wider"
