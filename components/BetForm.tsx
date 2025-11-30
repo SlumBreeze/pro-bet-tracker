@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { PlusCircle, Calculator, DollarSign, Camera, Loader2, Sparkles } from 'lucide-react';
+import { PlusCircle, Calculator, DollarSign, Camera, Loader2, Sparkles, UploadCloud } from 'lucide-react';
 import { GoogleGenAI, Type, SchemaShared } from "@google/genai";
 import { Sportsbook, BetStatus } from '../types';
 import { calculatePotentialProfit, formatCurrency } from '../utils/calculations';
@@ -30,6 +30,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
   const [calculatedPayout, setCalculatedPayout] = useState(0);
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -68,10 +69,8 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
     fileInputRef.current?.click();
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const processFile = async (file: File) => {
     if (!file) return;
-
     setIsAnalyzing(true);
 
     try {
@@ -181,8 +180,48 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
+  };
+
+  // Drag and Drop Handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        processFile(file);
+      } else {
+        alert("Please drop an image file.");
+      }
+    }
+  };
+
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm relative overflow-hidden">
+    <div 
+      className={`bg-slate-900 border rounded-xl p-6 shadow-sm relative overflow-hidden transition-all duration-200 ${
+        isDragging 
+          ? 'border-emerald-500 border-dashed bg-emerald-500/5' 
+          : 'border-slate-800'
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {/* Loading Overlay */}
       {isAnalyzing && (
         <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center text-center p-6 animate-in fade-in duration-200">
@@ -192,6 +231,17 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
            </div>
            <h3 className="text-white font-bold text-lg mt-4">Scanning Slip...</h3>
            <p className="text-slate-400 text-sm mt-1">Extracting odds, matchup, and wager details.</p>
+        </div>
+      )}
+
+      {/* Dragging Overlay */}
+      {isDragging && !isAnalyzing && (
+        <div className="absolute inset-0 bg-emerald-900/20 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center text-center p-6 border-2 border-emerald-500 border-dashed rounded-xl pointer-events-none">
+           <div className="p-4 bg-emerald-500/20 rounded-full mb-3 text-emerald-400 animate-bounce">
+             <UploadCloud size={32} />
+           </div>
+           <h3 className="text-emerald-400 font-bold text-xl">Drop Slip Here</h3>
+           <p className="text-emerald-200/70 text-sm">Release to auto-scan your bet</p>
         </div>
       )}
 
