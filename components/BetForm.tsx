@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { PlusCircle, Calculator, DollarSign, Camera, Loader2, Sparkles, UploadCloud } from 'lucide-react';
+import { PlusCircle, Calculator, DollarSign, Camera, Loader2, Sparkles, UploadCloud, Settings2, Wand2 } from 'lucide-react';
 import { GoogleGenAI, Type, SchemaShared } from "@google/genai";
 import { Sportsbook, BetStatus } from '../types';
 import { calculatePotentialProfit, formatCurrency } from '../utils/calculations';
@@ -8,9 +8,10 @@ import { SPORTSBOOKS, SPORTS } from '../constants';
 
 interface BetFormProps {
   onAddBet: (betData: any) => void;
+  currentBalance: number;
 }
 
-export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
+export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) => {
   // Initialize with local date string instead of ISO/UTC
   const getTodayString = () => {
     const today = new Date();
@@ -29,6 +30,10 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
   const [wager, setWager] = useState<number | ''>('');
   const [calculatedPayout, setCalculatedPayout] = useState(0);
   
+  // Wager Strategy State
+  const [wagerPct, setWagerPct] = useState(15);
+  const [showStrategy, setShowStrategy] = useState(false);
+  
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,6 +46,19 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
       setCalculatedPayout(0);
     }
   }, [wager, odds]);
+
+  const calculateRecommendedWager = () => {
+    // Basic calculation: Percentage of current bankroll
+    // Ensure we don't suggest 0 or negative
+    const base = Math.max(currentBalance, 0);
+    const amount = base * (wagerPct / 100);
+    return Math.floor(amount * 100) / 100; // Round down to 2 decimals
+  };
+
+  const applyRecommendedWager = () => {
+    const amount = calculateRecommendedWager();
+    setWager(amount);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,10 +140,10 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
           },
           wager: { 
             type: Type.NUMBER, 
-            description: "The wager amount in dollars (numeric only)." 
+            description: "The wager amount in dollars (numeric only). Return 0 or null if not visible." 
           }
         },
-        required: ["matchup", "pick", "odds", "wager", "sportsbook", "sport"]
+        required: ["matchup", "pick", "odds", "sportsbook", "sport"]
       };
 
       // 4. Call the model
@@ -155,8 +173,15 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
         if (result.matchup) setMatchup(result.matchup);
         if (result.pick) setPick(result.pick);
         if (result.odds) setOdds(result.odds);
-        if (result.wager) setWager(result.wager);
         if (result.date) setDate(result.date);
+        
+        // Smart Wager: Use scanned wager OR recommended wager
+        if (result.wager && result.wager > 0) {
+          setWager(result.wager);
+        } else {
+          // If slip has no wager (just lines), auto-fill with strategy recommendation
+          setWager(calculateRecommendedWager());
+        }
         
         if (result.sport && SPORTS.includes(result.sport)) {
            setSport(result.sport);
@@ -230,7 +255,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
              <Loader2 size={48} className="text-emerald-400 animate-spin relative z-10" />
            </div>
            <h3 className="text-white font-bold text-lg mt-4">Scanning Slip...</h3>
-           <p className="text-slate-400 text-sm mt-1">Extracting odds, matchup, and wager details.</p>
+           <p className="text-slate-400 text-sm mt-1">Extracting odds, matchup, and recommending wager.</p>
         </div>
       )}
 
@@ -270,6 +295,44 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
             <span>Scan Slip</span>
           </button>
         </div>
+      </div>
+      
+      {/* Wager Strategy Toggle */}
+      <div className="mb-5 bg-slate-950/50 rounded-lg border border-slate-800 overflow-hidden">
+        <button 
+          type="button"
+          onClick={() => setShowStrategy(!showStrategy)}
+          className="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-slate-400 hover:bg-slate-800/50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Settings2 size={14} />
+            WAGER STRATEGY
+          </div>
+          <span className="text-emerald-400">{wagerPct}% Daily Bankroll</span>
+        </button>
+        
+        {showStrategy && (
+           <div className="px-4 py-4 border-t border-slate-800 bg-slate-950 space-y-3 animate-in slide-in-from-top duration-200">
+             <div className="flex justify-between text-xs text-slate-400 mb-1">
+               <span>Conservative (1%)</span>
+               <span className="text-white font-bold">{wagerPct}%</span>
+               <span>Aggressive (25%)</span>
+             </div>
+             <input 
+               type="range" 
+               min="1" 
+               max="25" 
+               step="0.5"
+               value={wagerPct}
+               onChange={(e) => setWagerPct(parseFloat(e.target.value))}
+               className="w-full accent-emerald-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer"
+             />
+             <p className="text-[10px] text-slate-500">
+               Auto-calculates wager based on {wagerPct}% of your current bankroll ({formatCurrency(currentBalance)}).
+               This value will be auto-filled if you scan a slip without a wager amount.
+             </p>
+           </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -358,7 +421,17 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet }) => {
 
           {/* Wager */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-400 uppercase">Wager Amount</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase flex items-center justify-between">
+              Wager Amount
+              <button 
+                 type="button" 
+                 onClick={applyRecommendedWager}
+                 className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20"
+                 title={`Auto-fill ${wagerPct}% of bankroll`}
+              >
+                <Wand2 size={10} /> Rec: {formatCurrency(calculateRecommendedWager())}
+              </button>
+            </label>
             <div className="relative">
               <input
                 type="number"

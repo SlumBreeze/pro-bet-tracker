@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wallet, TrendingUp, Percent, BarChart3, Activity, Settings, History, Edit2 } from 'lucide-react';
 import { Bet, BetStatus, BankrollState, AdvancedStats } from './types';
@@ -235,7 +236,10 @@ const App: React.FC = () => {
               {/* Left Column: Form */}
               <div className="lg:col-span-1">
                 <div className="sticky top-24">
-                  <BetForm onAddBet={handleAddBet} />
+                  <BetForm 
+                    onAddBet={handleAddBet} 
+                    currentBalance={bankrollStats.currentBalance}
+                  />
                   
                   {/* Mini Insight / Tip Box */}
                   <div className="mt-6 p-4 rounded-xl border border-slate-800 bg-slate-900/50">
