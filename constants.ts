@@ -50,6 +50,36 @@ export const SPORTSBOOK_THEME: Record<string, { bg: string, text: string, border
     text: '#ffffff', 
     border: '#d42b2b' 
   },
+  [Sportsbook.FLIFF]: { 
+    bg: '#02D682', 
+    text: '#000000', 
+    border: '#029c5e' 
+  },
+  [Sportsbook.FANATICS]: { 
+    bg: '#F1F5F9', 
+    text: '#000000', 
+    border: '#CBD5E1' 
+  },
+  [Sportsbook.PRIZEPICKS]: { 
+    bg: '#702AF5', 
+    text: '#ffffff', 
+    border: '#5319bf' 
+  },
+  [Sportsbook.UNDERDOG]: { 
+    bg: '#FEC324', 
+    text: '#000000', 
+    border: '#d9a30f' 
+  },
+  [Sportsbook.DRAFTERS]: { 
+    bg: '#00B5E2', 
+    text: '#ffffff', 
+    border: '#008fb3' 
+  },
+  [Sportsbook.BETR]: { 
+    bg: '#8A2BE2', 
+    text: '#ffffff', 
+    border: '#6b1cb0' 
+  },
   [Sportsbook.OTHER]: { 
     bg: '#1e293b', 
     text: '#94a3b8', 

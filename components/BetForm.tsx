@@ -118,7 +118,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
           },
           matchup: { 
             type: Type.STRING, 
-            description: "The two teams or players competing (e.g., 'Lakers vs Celtics')." 
+            description: "The two teams or players competing (e.g., 'Lakers vs Celtics'). For DFS/Prop slips, list the primary sport or 'Multi-Sport' if mixed." 
           },
           sport: {
             type: Type.STRING,
@@ -132,15 +132,15 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
           },
           pick: { 
             type: Type.STRING, 
-            description: "The specific bet selection (e.g., 'Chiefs -3.5', 'Over 48.5', 'LeBron James Over 25.5 Pts')." 
+            description: "The specific bet selection. For DFS slips with multiple players, combine them into a single string (e.g., 'J. Allen Over 250, S. Diggs Under 60')." 
           },
           odds: { 
             type: Type.NUMBER, 
-            description: "The American odds as an integer (e.g., -110, 150)." 
+            description: "The American odds as an integer (e.g., -110, 150). For DFS, if only Entry and Payout are shown, calculate the implied American odds." 
           },
           wager: { 
             type: Type.NUMBER, 
-            description: "The wager amount in dollars (numeric only). Return 0 or null if not visible." 
+            description: "The wager or entry amount in dollars. Return 0 if not visible." 
           }
         },
         required: ["matchup", "pick", "odds", "sportsbook", "sport"]
@@ -157,7 +157,16 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
             }
           },
           {
-            text: "Analyze this sports betting slip. Extract the details to populate a bet tracking form. Be precise with the numbers."
+            text: `Analyze this sports betting slip. Extract the details to populate a bet tracking form.
+            
+            Special Instructions for DFS/Prop Slips (PrizePicks, Underdog, etc):
+            1. Concatenate all player selections into the 'pick' field (e.g. "J. Allen Over 250 Pass, S. Diggs Over 60 Rec").
+            2. If odds are not explicitly shown (common in DFS), calculate implied American odds based on the Entry Amount and Total Payout.
+               Formula: ((Payout - Entry) / Entry) * 100.
+               - Example: Entry $10 to pay $30 (Profit $20) -> Odds are +200.
+               - Example: Entry $10 to pay $18 (Profit $8) -> Odds are -125.
+            3. Use the 'Entry' amount as the 'wager'.
+            4. Detect the sportsbook from the logo (e.g., Purple logo = PrizePicks, Yellow = Underdog).`
           }
         ],
         config: {

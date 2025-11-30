@@ -14,6 +14,12 @@ export enum Sportsbook {
   BET365 = 'Bet365',
   POINTSBET = 'PointsBet',
   ESPNBET = 'ESPN Bet',
+  FLIFF = 'Fliff',
+  FANATICS = 'Fanatics',
+  PRIZEPICKS = 'PrizePicks',
+  UNDERDOG = 'Underdog Fantasy',
+  DRAFTERS = 'Drafters',
+  BETR = 'Betr',
   OTHER = 'Other',
 }
 
