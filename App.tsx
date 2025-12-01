@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wallet, TrendingUp, Percent, BarChart3, Activity, Settings, History, Edit2 } from 'lucide-react';
-import { Bet, BetStatus, BankrollState, AdvancedStats } from './types';
+import { Bet, BetStatus, BankrollState, AdvancedStats, Sportsbook } from './types';
 import { calculateBankrollStats, calculateAdvancedStats, formatCurrency, inferSportFromBet } from './utils/calculations';
 import { StatsCard } from './components/StatsCard';
 import { BetForm } from './components/BetForm';
@@ -26,10 +26,11 @@ const App: React.FC = () => {
       try {
         const parsed = JSON.parse(savedData);
         let loadedBets = parsed.bets || [];
-        // Migration: Add sport if missing using inference
+        // Migration: Add sport if missing using inference, and rename ESPN Bet to theScore Bet
         loadedBets = loadedBets.map((b: any) => ({
            ...b,
-           sport: (b.sport && b.sport !== 'Other') ? b.sport : inferSportFromBet(b)
+           sport: (b.sport && b.sport !== 'Other') ? b.sport : inferSportFromBet(b),
+           sportsbook: b.sportsbook === 'ESPN Bet' ? Sportsbook.THESCOREBET : b.sportsbook
         }));
         setBets(loadedBets);
         if (parsed.startingBankroll !== undefined && parsed.startingBankroll !== null) {
@@ -95,7 +96,8 @@ const App: React.FC = () => {
     if (isCleanState || confirm(`Found ${data.bets.length} bets. This will replace your current betting log. Continue?`)) {
       const processedBets = data.bets.map((b: any) => ({
         ...b,
-        sport: (b.sport && b.sport !== 'Other') ? b.sport : inferSportFromBet(b)
+        sport: (b.sport && b.sport !== 'Other') ? b.sport : inferSportFromBet(b),
+        sportsbook: b.sportsbook === 'ESPN Bet' ? Sportsbook.THESCOREBET : b.sportsbook
       }));
       setBets(processedBets);
       if (data.startingBankroll !== undefined && data.startingBankroll !== null) {

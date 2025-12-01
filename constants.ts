@@ -40,10 +40,10 @@ export const SPORTSBOOK_THEME: Record<string, { bg: string, text: string, border
     text: '#ffffff', 
     border: '#003d2e' 
   },
-  [Sportsbook.ESPNBET]: { 
-    bg: '#20F4CA', 
-    text: '#000000', 
-    border: '#17c4a1' 
+  [Sportsbook.THESCOREBET]: { 
+    bg: '#1C3F75', 
+    text: '#ffffff', 
+    border: '#142d55' 
   },
   [Sportsbook.POINTSBET]: { 
     bg: '#F53B3B', 
