@@ -35,7 +35,7 @@ export const BankrollModal: React.FC<BankrollModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseFloat(amount);
-    if (isNaN(val) || val <= 0) return;
+    if (isNaN(val)) return;
 
     let newStartingBankroll = 0;
     const currentBase = currentStartingBankroll || 0;
@@ -45,7 +45,18 @@ export const BankrollModal: React.FC<BankrollModalProps> = ({
     } else if (mode === 'withdraw') {
       newStartingBankroll = currentBase - val;
     } else {
-      newStartingBankroll = val;
+      // Reset / Set New Logic (Target Balance)
+      if (isFirstTime) {
+         newStartingBankroll = val;
+      } else {
+         // If user wants the Current Balance to be `val`, we need to adjust the base.
+         // CurrentBalance = Base + NetPnL
+         // Val = NewBase + NetPnL
+         // NewBase = Val - NetPnL
+         // NetPnL = CurrentBalance - Base
+         const netPnL = currentBalance - currentBase;
+         newStartingBankroll = val - netPnL;
+      }
     }
 
     onSetBankroll(newStartingBankroll);
@@ -75,11 +86,11 @@ export const BankrollModal: React.FC<BankrollModalProps> = ({
       };
     }
 
-    // For Reset, we show the effect on the Starting Base
+    // For Reset (Calibrate), we show Current Balance -> Target Balance
     return {
-      label: 'Current Base',
-      currentVal: currentStartingBankroll || 0,
-      newLabel: 'New Base',
+      label: 'Current Balance',
+      currentVal: currentBalance,
+      newLabel: 'New Target',
       newVal: val
     };
   };
@@ -104,7 +115,7 @@ export const BankrollModal: React.FC<BankrollModalProps> = ({
             <Wallet size={24} className="text-emerald-400" />
           </div>
           <h2 className="text-xl font-bold text-white">{isFirstTime ? 'Setup Bankroll' : 'Manage Bankroll'}</h2>
-          {!isFirstTime && <p className="text-slate-400 text-sm mt-1">Deposit or Withdraw funds</p>}
+          {!isFirstTime && <p className="text-slate-400 text-sm mt-1">Adjust your balance</p>}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -137,7 +148,7 @@ export const BankrollModal: React.FC<BankrollModalProps> = ({
 
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              {mode === 'deposit' ? 'Deposit Amount' : mode === 'withdraw' ? 'Withdrawal Amount' : 'Starting Bankroll'}
+              {mode === 'deposit' ? 'Deposit Amount' : mode === 'withdraw' ? 'Withdrawal Amount' : 'Target Balance'}
             </label>
             <div className="relative">
               <span className="absolute left-4 top-3.5 text-slate-400 text-lg">$</span>
@@ -152,6 +163,9 @@ export const BankrollModal: React.FC<BankrollModalProps> = ({
                 placeholder="0.00"
               />
             </div>
+            {mode === 'reset' && !isFirstTime && (
+                <p className="text-[10px] text-slate-500 italic">This will calibrate your account so your Current Balance equals exactly what you enter.</p>
+            )}
           </div>
 
           {/* Preview Section for Adjustments */}
@@ -180,7 +194,7 @@ export const BankrollModal: React.FC<BankrollModalProps> = ({
                 : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 hover:shadow-emerald-500/20'
             }`}
           >
-            {mode === 'deposit' ? 'Add Funds' : mode === 'withdraw' ? 'Withdraw Funds' : isFirstTime ? 'Start Tracking' : 'Update Bankroll'}
+            {mode === 'deposit' ? 'Add Funds' : mode === 'withdraw' ? 'Withdraw Funds' : isFirstTime ? 'Start Tracking' : 'Calibrate Balance'}
           </button>
         </form>
       </div>
