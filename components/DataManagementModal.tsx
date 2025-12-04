@@ -1,3 +1,4 @@
+
 import React, { useRef, useState } from 'react';
 import { Download, Upload, X, FileJson, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { Bet } from '../types';
@@ -35,7 +36,11 @@ export const DataManagementModal: React.FC<DataManagementModalProps> = ({
     
     setStatus('success');
     setMessage('Backup downloaded successfully!');
-    setTimeout(() => setStatus('idle'), 3000);
+    
+    setTimeout(() => {
+      onClose();
+      setStatus('idle');
+    }, 1500);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
