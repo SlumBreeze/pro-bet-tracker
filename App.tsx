@@ -11,9 +11,6 @@ import { BankrollModal } from './components/BankrollModal';
 import { DataManagementModal } from './components/DataManagementModal';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 
-const STORAGE_KEY_BANKROLL = 'probet_bankroll_v1';
-const OLD_STORAGE_KEY_DATA = 'probet_data_v1';
-
 const App: React.FC = () => {
   const [bets, setBets] = useState<Bet[]>([]);
   // Default to 0 instead of null so dashboard is always visible
@@ -24,33 +21,24 @@ const App: React.FC = () => {
   const [isBankrollModalOpen, setIsBankrollModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
-  // 1. Load Data on Mount (Supabase for Bets, LocalStorage for Bankroll Settings)
+  // 1. Load Data on Mount (Supabase for Bets AND Bankroll)
   useEffect(() => {
     const loadData = async () => {
       setIsSyncing(true);
       
-      // Load Bankroll
-      let savedBankroll = localStorage.getItem(STORAGE_KEY_BANKROLL);
-
-      // FALLBACK: Check old storage key if new one is missing
-      if (!savedBankroll) {
-        const oldData = localStorage.getItem(OLD_STORAGE_KEY_DATA); // Old key
-        if (oldData) {
-          try {
-            const parsed = JSON.parse(oldData);
-            if (parsed.startingBankroll !== undefined && parsed.startingBankroll !== null) {
-              savedBankroll = String(parsed.startingBankroll);
-              // Save to new key immediately so we don't check again
-              localStorage.setItem(STORAGE_KEY_BANKROLL, savedBankroll);
-            }
-          } catch (e) { 
-             console.warn('Failed to migrate old bankroll data:', e);
-          }
+      // Fetch Bankroll from Cloud
+      try {
+        const { data: settings } = await supabase
+          .from('settings')
+          .select('starting_balance')
+          .eq('id', 1)
+          .single();
+        
+        if (settings) {
+          setStartingBankroll(settings.starting_balance);
         }
-      }
-
-      if (savedBankroll) {
-        setStartingBankroll(Number(savedBankroll));
+      } catch (err) {
+        console.error('Error loading bankroll settings from Supabase:', err);
       }
 
       // Load Bets from Supabase
@@ -65,7 +53,7 @@ const App: React.FC = () => {
         }
         
         if (data) {
-          // Sanitize data: ensure numerical values are numbers (BigInt returns as string often)
+          // Sanitize data: ensure numerical values are numbers
           const safeData = data.map((b: any) => ({
             ...b,
             createdAt: Number(b.createdAt), 
@@ -75,7 +63,6 @@ const App: React.FC = () => {
         }
       } catch (err: any) {
         console.error('Error loading bets from Supabase:', err.message || err);
-        // Optional: show a UI toast here if needed
       } finally {
         setIsLoaded(true);
         setIsSyncing(false);
@@ -94,11 +81,23 @@ const App: React.FC = () => {
     }
   }, [isLoaded, bets.length]);
 
-  // 3. Save Bankroll Changes (Local Storage only)
-  useEffect(() => {
-    if (!isLoaded) return;
-    localStorage.setItem(STORAGE_KEY_BANKROLL, String(startingBankroll));
-  }, [startingBankroll, isLoaded]);
+  // 3. Update Bankroll Function (Cloud Sync)
+  const handleUpdateBankroll = async (amount: number) => {
+    setStartingBankroll(amount);
+    setIsBankrollModalOpen(false);
+
+    try {
+      // Using upsert to handle both insert (first time) and update
+      const { error } = await supabase
+        .from('settings')
+        .upsert({ id: 1, starting_balance: amount });
+      
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Error syncing bankroll to cloud:', err.message);
+      alert('Failed to sync bankroll settings to the cloud.');
+    }
+  };
 
   const bankrollStats: BankrollState = useMemo(() => {
     return calculateBankrollStats(startingBankroll, bets);
@@ -217,8 +216,16 @@ const App: React.FC = () => {
       // Update Local State
       setBets(prev => [...processedBets, ...prev]); // Append imported bets
       
+      // Update Bankroll if present in import
       if (data.startingBankroll !== undefined && data.startingBankroll !== null) {
         setStartingBankroll(data.startingBankroll);
+        try {
+          await supabase
+            .from('settings')
+            .upsert({ id: 1, starting_balance: data.startingBankroll });
+        } catch (e) {
+          console.error("Failed to sync imported bankroll to cloud", e);
+        }
       }
 
       // Bulk Insert to Supabase
@@ -233,11 +240,6 @@ const App: React.FC = () => {
         setIsSyncing(false);
       }
     }
-  };
-
-  const handleSetBankroll = (amount: number) => {
-    setStartingBankroll(amount);
-    setIsBankrollModalOpen(false);
   };
 
   if (!isLoaded) return (
@@ -261,7 +263,7 @@ const App: React.FC = () => {
       <BankrollModal 
         isOpen={isBankrollModalOpen}
         onClose={() => setIsBankrollModalOpen(false)}
-        onSetBankroll={handleSetBankroll}
+        onSetBankroll={handleUpdateBankroll}
         currentStartingBankroll={startingBankroll}
         currentBalance={bankrollStats.currentBalance}
       />
