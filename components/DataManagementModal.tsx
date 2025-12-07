@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import { Download, Upload, X, FileJson, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { Bet } from '../types';
@@ -105,13 +104,13 @@ export const DataManagementModal: React.FC<DataManagementModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-white border border-ink-gray rounded-2xl w-full max-w-lg p-6 shadow-2xl relative overflow-hidden">
         
         {/* Status Notification */}
         {status !== 'idle' && (
           <div className={`absolute top-0 left-0 right-0 p-3 text-sm font-bold text-center flex items-center justify-center gap-2 animate-in slide-in-from-top duration-300 ${
-            status === 'success' ? 'bg-emerald-500/90 text-white' : 'bg-rose-500/90 text-white'
+            status === 'success' ? 'bg-status-win/90 text-white' : 'bg-status-loss/90 text-white'
           }`}>
             {status === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
             {message}
@@ -119,29 +118,29 @@ export const DataManagementModal: React.FC<DataManagementModalProps> = ({
         )}
 
         <div className="flex items-center justify-between mb-6 mt-2">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <FileJson className="text-emerald-400" /> Data Management
+          <h2 className="text-xl font-bold text-ink-text flex items-center gap-2">
+            <FileJson className="text-ink-accent" /> Data Management
           </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-gray-400 hover:text-ink-text transition-colors">
             <X size={24} />
           </button>
         </div>
 
         <div className="space-y-4">
           {/* Export Section */}
-          <div className="p-5 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-emerald-500/30 transition-colors group">
+          <div className="p-5 rounded-xl bg-ink-base border border-ink-gray hover:border-ink-accent/30 transition-colors group">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
+              <div className="p-3 bg-ink-accent/10 rounded-lg text-ink-accent group-hover:bg-ink-accent/20 transition-colors">
                 <Download size={24} />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-white text-lg">Backup Data</h3>
-                <p className="text-sm text-slate-400 mt-1 mb-3">
+                <h3 className="font-bold text-ink-text text-lg">Backup Data</h3>
+                <p className="text-sm text-gray-500 mt-1 mb-3">
                   Save your betting history to your device. Use this file to restore your progress later.
                 </p>
                 <button 
                   onClick={handleDownload}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-lg transition-colors shadow-lg shadow-emerald-900/20 flex items-center gap-2"
+                  className="px-4 py-2 bg-ink-accent hover:bg-slate-600 text-white text-sm font-bold rounded-lg transition-colors shadow-sm flex items-center gap-2"
                 >
                   <Download size={16} /> Download JSON
                 </button>
@@ -150,16 +149,16 @@ export const DataManagementModal: React.FC<DataManagementModalProps> = ({
           </div>
 
           {/* Import Section */}
-          <div className="p-5 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-amber-500/30 transition-colors group">
+          <div className="p-5 rounded-xl bg-ink-base border border-ink-gray hover:border-amber-500/30 transition-colors group">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-amber-500/10 rounded-lg text-amber-400 group-hover:bg-amber-500/20 transition-colors">
+              <div className="p-3 bg-amber-500/10 rounded-lg text-amber-500 group-hover:bg-amber-500/20 transition-colors">
                 <Upload size={24} />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-white text-lg">Restore Data</h3>
-                <p className="text-sm text-slate-400 mt-1 mb-3">
+                <h3 className="font-bold text-ink-text text-lg">Restore Data</h3>
+                <p className="text-sm text-gray-500 mt-1 mb-3">
                   Upload a previously saved JSON file. 
-                  <span className="text-amber-400/80 block mt-1 text-xs">Note: Valid files will overwrite current data.</span>
+                  <span className="text-amber-600/80 block mt-1 text-xs">Note: Valid files will overwrite current data.</span>
                 </p>
                 <input 
                   type="file" 
@@ -170,7 +169,7 @@ export const DataManagementModal: React.FC<DataManagementModalProps> = ({
                 />
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+                  className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-ink-text text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
                 >
                   <RefreshCw size={16} /> Select Backup File
                 </button>

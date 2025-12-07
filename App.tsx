@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wallet, TrendingUp, Percent, BarChart3, Activity, Settings, History, Edit2 } from 'lucide-react';
 import { Bet, BetStatus, BankrollState, AdvancedStats, Sportsbook } from './types';
@@ -114,7 +113,7 @@ const App: React.FC = () => {
   if (!isLoaded) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-20 flex flex-col">
+    <div className="min-h-screen bg-ink-base pb-20 flex flex-col font-sans">
       <DataManagementModal 
         isOpen={isDataModalOpen}
         onClose={() => setIsDataModalOpen(false)}
@@ -131,13 +130,13 @@ const App: React.FC = () => {
       />
 
       {/* Header */}
-      <header className="bg-slate-900/50 backdrop-blur border-b border-slate-800 sticky top-0 z-40">
+      <header className="bg-ink-paper/80 backdrop-blur-md border-b border-ink-gray sticky top-0 z-40 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-ink-accent rounded-lg flex items-center justify-center shadow-sm">
               <TrendingUp size={18} className="text-white" />
             </div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+            <h1 className="text-xl font-bold text-ink-text tracking-tight">
               ProBet Tracker
             </h1>
           </div>
@@ -145,16 +144,16 @@ const App: React.FC = () => {
           <div className="flex items-center gap-4">
              {startingBankroll !== null && (
                <div className="text-right hidden sm:block">
-                 <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Current Balance</p>
+                 <p className="text-[10px] text-ink-text/60 uppercase font-bold tracking-wider mb-0.5">Current Balance</p>
                  <div className="flex items-center justify-end gap-2">
                     <p className={`font-mono font-bold text-lg leading-none ${
-                      bankrollStats.currentBalance >= (startingBankroll || 0) ? 'text-emerald-400' : 'text-rose-400'
+                      bankrollStats.currentBalance >= (startingBankroll || 0) ? 'text-status-win' : 'text-status-loss'
                     }`}>
                       {formatCurrency(bankrollStats.currentBalance)}
                     </p>
                     <button 
                       onClick={() => setIsBankrollModalOpen(true)}
-                      className="p-1 rounded-md text-slate-600 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all"
+                      className="p-1 rounded-md text-ink-text/40 hover:text-ink-accent hover:bg-ink-accent/10 transition-all"
                       title="Manage Bankroll"
                     >
                       <Edit2 size={14} />
@@ -163,12 +162,12 @@ const App: React.FC = () => {
                </div>
              )}
              
-             {startingBankroll !== null && <div className="w-px h-8 bg-slate-800 hidden sm:block"></div>}
+             {startingBankroll !== null && <div className="w-px h-8 bg-ink-gray hidden sm:block"></div>}
 
              <div className="flex gap-2">
                 <button
                   onClick={() => setIsDataModalOpen(true)}
-                  className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all border border-transparent hover:border-slate-600"
+                  className="p-2 rounded-lg bg-white border border-ink-gray text-ink-text/60 hover:text-ink-accent hover:border-ink-accent transition-all shadow-sm"
                   title="Settings & Backup"
                 >
                   <Settings size={20} />
@@ -224,10 +223,10 @@ const App: React.FC = () => {
             </div>
 
             {/* Streak & Analytics Section */}
-            <div className="border-t border-slate-800 pt-6">
+            <div className="border-t border-ink-gray pt-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Activity size={20} className="text-emerald-400" />
+                <h3 className="text-lg font-bold text-ink-text flex items-center gap-2">
+                  <Activity size={20} className="text-ink-accent" />
                   Performance Analytics
                 </h3>
               </div>
@@ -244,14 +243,14 @@ const App: React.FC = () => {
                   />
                   
                   {/* Mini Insight / Tip Box */}
-                  <div className="mt-6 p-4 rounded-xl border border-slate-800 bg-slate-900/50">
-                    <h4 className="text-emerald-400 font-bold text-sm mb-2 flex items-center gap-2">
+                  <div className="mt-6 p-4 rounded-xl border border-ink-gray bg-ink-paper/50 backdrop-blur-sm shadow-sm">
+                    <h4 className="text-ink-accent font-bold text-sm mb-2 flex items-center gap-2">
                       <TrendingUp size={14} /> Smart Betting Tip
                     </h4>
-                    <p className="text-slate-400 text-sm leading-relaxed mb-2">
-                      <span className="text-white font-medium">Actual vs. Flat ROI:</span>
+                    <p className="text-ink-text/80 text-sm leading-relaxed mb-2">
+                      <span className="text-ink-text font-medium">Actual vs. Flat ROI:</span>
                     </p>
-                    <ul className="text-xs text-slate-500 space-y-1 list-disc pl-4">
+                    <ul className="text-xs text-ink-text/60 space-y-1 list-disc pl-4">
                         <li>If <b>Actual {'>'} Flat</b>: Your bet sizing is excellent (you bet more on winning plays).</li>
                         <li>If <b>Flat {'>'} Actual</b>: You are picking well but losing money on big bets. Consider flat betting.</li>
                     </ul>
@@ -275,7 +274,7 @@ const App: React.FC = () => {
 
       {/* Footer / Status Bar */}
       <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full text-center sm:text-left">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-ink-text/40">
              <p>© 2024 ProBet Tracker. Data stored locally.</p>
           </div>
       </footer>

@@ -5,36 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ProBet Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: {
+                base: '#FFFFE3',    // Soft Ivory (Page Background)
+                text: '#4A4A4A',    // Charcoal Black (Primary Text)
+                gray: '#CBCBCB',    // Cool Gray (Borders/Dividers)
+                accent: '#6D8196',  // Slate Blue (Brand/Buttons)
+                paper: '#ffffff',   // Pure White (Card Backgrounds)
+              },
+              status: {
+                win: '#059669',     // Emerald 600
+                loss: '#e11d48',    // Rose 600
+              }
+            }
+          }
+        }
+      }
+    </script>
     <style>
-      /* Custom scrollbar for dark theme */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #0f172a; 
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #334155; 
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #475569; 
-      }
+      /* Custom scrollbar for Ink theme */
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: #FFFFE3; }
+      ::-webkit-scrollbar-thumb { background: #CBCBCB; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #6D8196; }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
-  }
-}
-</script>
-</head>
-  <body class="bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500 selection:text-white">
+    <script type="importmap">
+    {
+      "imports": {
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+      }
+    }
+    </script>
+  </head>
+  <body class="bg-ink-base text-ink-text antialiased selection:bg-ink-accent selection:text-white">
     <div id="root"></div>
   </body>
 </html>

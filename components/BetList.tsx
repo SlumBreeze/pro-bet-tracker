@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Trash2, TrendingUp, TrendingDown, MinusCircle, Edit2, Save, X, Check, ChevronDown, ChevronRight, Calendar } from 'lucide-react';
 import { Bet, BetStatus, Sportsbook } from '../types';
@@ -116,30 +115,27 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
 
   const getRowStyle = (book: Sportsbook) => {
     const theme = SPORTSBOOK_THEME[book] || SPORTSBOOK_THEME[Sportsbook.OTHER];
-    const hex = theme.bg.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    
+    // Keep solid accent bar but on light bg
     return {
-      backgroundColor: `rgba(${r}, ${g}, ${b}, 0.08)`, // Very subtle 8% opacity
-      borderLeft: `4px solid ${theme.bg}` // Solid accent bar
+      backgroundColor: '#FFFFFF', // White base
+      borderLeft: `4px solid ${theme.bg}`
     };
   };
 
   const getBookTextColor = (book: Sportsbook) => {
     const theme = SPORTSBOOK_THEME[book] || SPORTSBOOK_THEME[Sportsbook.OTHER];
+    // On light background, the brand color usually works well as text too
     return theme.bg;
   };
 
   if (bets.length === 0) {
     return (
-      <div className="bg-slate-900 rounded-xl border border-slate-800 p-12 text-center">
-        <div className="inline-flex p-4 rounded-full bg-slate-800 text-slate-500 mb-4">
+      <div className="bg-ink-paper/50 backdrop-blur-sm rounded-xl border border-ink-gray p-12 text-center shadow-sm">
+        <div className="inline-flex p-4 rounded-full bg-white text-ink-text/60 mb-4 shadow-sm border border-ink-gray/20">
           <Calendar size={32} />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2">No Bets Tracked Yet</h3>
-        <p className="text-slate-400 max-w-sm mx-auto">
+        <h3 className="text-xl font-bold text-ink-text mb-2">No Bets Tracked Yet</h3>
+        <p className="text-ink-text/60 max-w-sm mx-auto">
           Start by adding your first wager in the form above to build your bankroll history.
         </p>
       </div>
@@ -149,16 +145,16 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-white">Recent Activity</h3>
+        <h3 className="text-lg font-bold text-ink-text">Recent Activity</h3>
         <div className="flex items-center gap-2">
-            <span className="text-slate-500 text-sm">{bets.length} Total Bets</span>
+            <span className="text-ink-text/60 text-sm">{bets.length} Total Bets</span>
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+      <div className="bg-ink-paper/50 backdrop-blur-sm rounded-xl border border-ink-gray overflow-hidden shadow-sm">
         <table className="w-full text-left border-collapse table-fixed md:table-auto">
           <thead>
-            <tr className="bg-slate-950 border-b border-slate-800 text-xs uppercase text-slate-400 font-semibold tracking-wider">
+            <tr className="bg-ink-base/50 border-b border-ink-gray text-xs uppercase text-ink-text/60 font-semibold tracking-wider">
               {/* No Date column needed in body as it's in the group header */}
               <th className="px-4 py-3 w-1/3 md:w-auto">Matchup / Pick</th>
               <th className="px-4 py-3 hidden sm:table-cell w-28">Sportsbook</th>
@@ -171,29 +167,29 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
           
           {groupedBets.map((group) => {
             const isExpanded = expandedDates.has(group.date);
-            const dateProfitClass = group.totalProfit > 0 ? 'text-emerald-400' : group.totalProfit < 0 ? 'text-rose-400' : 'text-slate-400';
+            const dateProfitClass = group.totalProfit > 0 ? 'text-status-win' : group.totalProfit < 0 ? 'text-status-loss' : 'text-ink-text/40';
 
             return (
-              <tbody key={group.date} className="border-b border-slate-800 last:border-b-0">
+              <tbody key={group.date} className="border-b border-ink-gray last:border-b-0">
                 {/* Group Header */}
                 <tr 
-                  className="bg-slate-800/30 hover:bg-slate-800/60 cursor-pointer transition-colors"
+                  className="bg-ink-base/30 hover:bg-ink-base/50 cursor-pointer transition-colors"
                   onClick={() => toggleDateGroup(group.date)}
                 >
                   <td colSpan={6} className="px-4 py-2.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        {isExpanded ? <ChevronDown size={16} className="text-slate-500" /> : <ChevronRight size={16} className="text-slate-500" />}
+                        {isExpanded ? <ChevronDown size={16} className="text-ink-text/40" /> : <ChevronRight size={16} className="text-ink-text/40" />}
                         <div className="flex items-center gap-2">
-                           <Calendar size={14} className="text-emerald-500" />
-                           <span className="text-sm font-bold text-white">{formatDate(group.date)}</span>
-                           <span className="text-xs text-slate-500 font-medium ml-2">
+                           <Calendar size={14} className="text-ink-accent" />
+                           <span className="text-sm font-bold text-ink-text">{formatDate(group.date)}</span>
+                           <span className="text-xs text-ink-text/60 font-medium ml-2">
                              {group.bets.length} Bet{group.bets.length !== 1 ? 's' : ''}
                            </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 text-xs font-medium">
-                        <span className="text-slate-400 hidden sm:inline">
+                        <span className="text-ink-text/60 hidden sm:inline">
                           {group.wins}W - {group.losses}L - {group.pushes}P
                         </span>
                         <span className={`font-mono ${dateProfitClass}`}>
@@ -215,27 +211,26 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                     <tr 
                       key={bet.id} 
                       style={rowStyle}
-                      className={`group transition-all border-t border-slate-800/50 ${!isEditing ? 'hover:brightness-110' : 'bg-slate-900'}`}
+                      className={`group transition-all border-t border-ink-gray ${!isEditing ? 'hover:bg-ink-base/50' : 'bg-ink-paper'}`}
                     >
                       {isEditing ? (
                         // Edit Mode
                         <>
-                          <td className="px-4 py-2 align-top pl-4"> {/* Remove extra padding since border is gone in edit */}
+                          <td className="px-4 py-2 align-top pl-4">
                             <div className="flex flex-col gap-2">
-                              {/* Date edit also available here implicitly if we wanted, but sticking to logic */}
                               <input 
                                 type="text" 
                                 placeholder="Matchup"
                                 value={editForm.matchup}
                                 onChange={(e) => handleInputChange('matchup', e.target.value)}
-                                className="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white text-xs w-full focus:border-emerald-500 outline-none" 
+                                className="bg-white border border-ink-gray rounded px-2 py-1 text-ink-text text-xs w-full focus:border-ink-accent outline-none" 
                               />
                               <input 
                                 type="text" 
                                 placeholder="Pick"
                                 value={editForm.pick}
                                 onChange={(e) => handleInputChange('pick', e.target.value)}
-                                className="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-slate-300 text-xs w-full focus:border-emerald-500 outline-none" 
+                                className="bg-white border border-ink-gray rounded px-2 py-1 text-ink-text/80 text-xs w-full focus:border-ink-accent outline-none" 
                               />
                             </div>
                           </td>
@@ -243,7 +238,7 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                             <select 
                               value={editForm.sportsbook} 
                               onChange={(e) => handleInputChange('sportsbook', e.target.value)}
-                              className="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-slate-300 text-xs w-full focus:border-emerald-500 outline-none"
+                              className="bg-white border border-ink-gray rounded px-2 py-1 text-ink-text/80 text-xs w-full focus:border-ink-accent outline-none"
                             >
                               {SPORTSBOOKS.map(sb => (
                                 <option key={sb} value={sb}>{sb}</option>
@@ -255,7 +250,7 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                               type="number" 
                               value={editForm.odds}
                               onChange={(e) => handleInputChange('odds', Number(e.target.value))}
-                              className="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-amber-400 text-xs w-20 ml-auto text-right focus:border-emerald-500 outline-none font-mono" 
+                              className="bg-white border border-ink-gray rounded px-2 py-1 text-ink-text text-xs w-20 ml-auto text-right focus:border-ink-accent outline-none font-mono" 
                             />
                           </td>
                           <td className="px-4 py-2 align-top text-right">
@@ -265,24 +260,24 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                                step="0.01"
                                value={editForm.wager}
                                onChange={(e) => handleInputChange('wager', Number(e.target.value))}
-                               className="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white text-xs w-20 ml-auto text-right focus:border-emerald-500 outline-none" 
+                               className="bg-white border border-ink-gray rounded px-2 py-1 text-ink-text text-xs w-20 ml-auto text-right focus:border-ink-accent outline-none" 
                              />
                           </td>
                           <td className="px-4 py-2 text-center align-middle">
-                            <span className="text-xs text-slate-500 italic">Editing...</span>
+                            <span className="text-xs text-ink-text/60 italic">Editing...</span>
                           </td>
                           <td className="px-4 py-2 text-right align-top">
                             <div className="flex justify-end gap-1">
                               <button 
                                 onClick={handleSaveEdit}
-                                className="p-1.5 rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                                className="p-1.5 rounded bg-ink-accent/10 text-ink-accent hover:bg-ink-accent/20 transition-colors"
                                 title="Save Changes"
                               >
                                 <Save size={14} />
                               </button>
                               <button 
                                 onClick={handleCancelEdit}
-                                className="p-1.5 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 transition-colors"
+                                className="p-1.5 rounded bg-white border border-ink-gray text-ink-text/60 hover:text-ink-text hover:bg-gray-50 transition-colors"
                                 title="Cancel"
                               >
                                 <X size={14} />
@@ -295,8 +290,8 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                         <>
                           <td className="px-4 py-2 align-top">
                             <div className="flex flex-col items-start">
-                              <span className="text-white font-medium text-sm leading-tight break-words">{bet.matchup}</span>
-                              <span className="text-slate-400 text-xs leading-tight break-words mt-1">{bet.pick}</span>
+                              <span className="text-ink-text font-medium text-sm leading-tight break-words">{bet.matchup}</span>
+                              <span className="text-ink-text/60 text-xs leading-tight break-words mt-1">{bet.pick}</span>
                               <div className="sm:hidden mt-1.5">
                                 <span 
                                   className="text-[10px] font-bold uppercase tracking-wider"
@@ -315,13 +310,13 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                               {bet.sportsbook}
                             </span>
                           </td>
-                          <td className="px-4 py-2 text-right text-sm font-mono text-amber-400 align-top">
+                          <td className="px-4 py-2 text-right text-sm font-mono text-ink-text align-top">
                             {bet.odds > 0 ? `+${bet.odds}` : bet.odds}
                           </td>
                           <td className="px-4 py-2 text-right align-top">
                              <div className="flex flex-col items-end">
-                               <span className="text-white font-medium text-sm whitespace-nowrap">{formatCurrency(bet.wager)}</span>
-                               <span className="text-emerald-500 text-[10px] whitespace-nowrap">To Win: {formatCurrency(bet.potentialProfit)}</span>
+                               <span className="text-ink-text font-medium text-sm whitespace-nowrap">{formatCurrency(bet.wager)}</span>
+                               <span className="text-status-win text-[10px] whitespace-nowrap">To Win: {formatCurrency(bet.potentialProfit)}</span>
                              </div>
                           </td>
                           <td className="px-4 py-2 text-center align-top">
@@ -330,21 +325,21 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                                 <>
                                   <button 
                                     onClick={(e) => { e.stopPropagation(); onUpdateStatus(bet.id, BetStatus.WON); }}
-                                    className="p-1 rounded bg-slate-900/50 text-slate-400 hover:bg-emerald-500 hover:text-white transition-colors border border-slate-700/50"
+                                    className="p-1 rounded bg-white text-ink-text/40 hover:bg-status-win hover:text-white transition-colors border border-ink-gray"
                                     title="Mark Won"
                                   >
                                     <TrendingUp size={12} />
                                   </button>
                                   <button 
                                     onClick={(e) => { e.stopPropagation(); onUpdateStatus(bet.id, BetStatus.LOST); }}
-                                    className="p-1 rounded bg-slate-900/50 text-slate-400 hover:bg-rose-500 hover:text-white transition-colors border border-slate-700/50"
+                                    className="p-1 rounded bg-white text-ink-text/40 hover:bg-status-loss hover:text-white transition-colors border border-ink-gray"
                                     title="Mark Lost"
                                   >
                                     <TrendingDown size={12} />
                                   </button>
                                   <button 
                                     onClick={(e) => { e.stopPropagation(); onUpdateStatus(bet.id, BetStatus.PUSH); }}
-                                    className="p-1 rounded bg-slate-900/50 text-slate-400 hover:bg-slate-600 hover:text-white transition-colors border border-slate-700/50"
+                                    className="p-1 rounded bg-white text-ink-text/40 hover:bg-ink-text/60 hover:text-white transition-colors border border-ink-gray"
                                     title="Mark Push"
                                   >
                                     <MinusCircle size={12} />
@@ -352,9 +347,9 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                                 </>
                               ) : (
                                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                                  bet.status === BetStatus.WON ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
-                                  bet.status === BetStatus.LOST ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' :
-                                  'bg-slate-500/20 text-slate-400 border-slate-500/30'
+                                  bet.status === BetStatus.WON ? 'bg-status-win/10 text-status-win border-status-win/20' :
+                                  bet.status === BetStatus.LOST ? 'bg-status-loss/10 text-status-loss border-status-loss/20' :
+                                  'bg-white text-ink-text/60 border-ink-gray'
                                 }`}>
                                   {bet.status}
                                 </span>
@@ -363,7 +358,7 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                             {bet.status !== BetStatus.PENDING && (
                               <button 
                                 onClick={(e) => { e.stopPropagation(); onUpdateStatus(bet.id, BetStatus.PENDING); }}
-                                className="text-[10px] text-slate-500 hover:text-slate-300 mt-1 block w-full text-center"
+                                className="text-[10px] text-ink-text/40 hover:text-ink-text mt-1 block w-full text-center"
                               >
                                 Undo
                               </button>
@@ -377,14 +372,14 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                                     onDelete(bet.id);
                                     setDeleteConfirmId(null);
                                   }}
-                                  className="p-1 rounded bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors border border-rose-500/30"
+                                  className="p-1 rounded bg-status-loss/10 text-status-loss hover:bg-status-loss hover:text-white transition-colors border border-status-loss/20"
                                   title="Confirm Delete"
                                 >
                                   <Check size={12} />
                                 </button>
                                 <button 
                                   onClick={() => setDeleteConfirmId(null)}
-                                  className="p-1 rounded bg-slate-900/50 text-slate-400 hover:bg-slate-700 transition-colors"
+                                  className="p-1 rounded bg-white text-ink-text/40 hover:bg-gray-50 border border-ink-gray transition-colors"
                                   title="Cancel"
                                 >
                                   <X size={12} />
@@ -394,7 +389,7 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                               <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                 <button 
                                   onClick={() => handleStartEdit(bet)}
-                                  className="text-slate-500 hover:text-emerald-400 transition-all p-1.5"
+                                  className="text-ink-text/40 hover:text-ink-accent transition-all p-1.5"
                                   title="Edit Bet"
                                 >
                                   <Edit2 size={14} />
@@ -404,7 +399,7 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                                     setEditingId(null);
                                     setDeleteConfirmId(bet.id);
                                   }}
-                                  className="text-slate-500 hover:text-rose-400 transition-colors p-1.5"
+                                  className="text-ink-text/40 hover:text-status-loss transition-colors p-1.5"
                                   title="Delete Bet"
                                 >
                                   <Trash2 size={14} />

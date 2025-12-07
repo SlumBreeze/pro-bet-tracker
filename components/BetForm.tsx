@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { PlusCircle, Calculator, DollarSign, Camera, Loader2, Sparkles, UploadCloud, Settings2, Wand2 } from 'lucide-react';
 import { GoogleGenAI, Type, SchemaShared } from "@google/genai";
@@ -247,10 +246,10 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
 
   return (
     <div 
-      className={`bg-slate-900 border rounded-xl p-6 shadow-sm relative overflow-hidden transition-all duration-200 ${
+      className={`bg-ink-paper/50 backdrop-blur-sm border rounded-xl p-6 shadow-sm relative overflow-hidden transition-all duration-200 ${
         isDragging 
-          ? 'border-emerald-500 border-dashed bg-emerald-500/5' 
-          : 'border-slate-800'
+          ? 'border-ink-accent border-dashed bg-ink-accent/5' 
+          : 'border-ink-gray'
       }`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -258,29 +257,29 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
     >
       {/* Loading Overlay */}
       {isAnalyzing && (
-        <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center text-center p-6 animate-in fade-in duration-200">
+        <div className="absolute inset-0 bg-ink-paper/90 backdrop-blur-sm z-10 flex flex-col items-center justify-center text-center p-6 animate-in fade-in duration-200">
            <div className="relative">
-             <div className="absolute inset-0 bg-emerald-500 blur-xl opacity-20 animate-pulse rounded-full"></div>
-             <Loader2 size={48} className="text-emerald-400 animate-spin relative z-10" />
+             <div className="absolute inset-0 bg-ink-accent blur-xl opacity-20 animate-pulse rounded-full"></div>
+             <Loader2 size={48} className="text-ink-accent animate-spin relative z-10" />
            </div>
-           <h3 className="text-white font-bold text-lg mt-4">Scanning Slip...</h3>
-           <p className="text-slate-400 text-sm mt-1">Extracting odds, matchup, and recommending wager.</p>
+           <h3 className="text-ink-text font-bold text-lg mt-4">Scanning Slip...</h3>
+           <p className="text-ink-text/60 text-sm mt-1">Extracting odds, matchup, and recommending wager.</p>
         </div>
       )}
 
       {/* Dragging Overlay */}
       {isDragging && !isAnalyzing && (
-        <div className="absolute inset-0 bg-emerald-900/20 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center text-center p-6 border-2 border-emerald-500 border-dashed rounded-xl pointer-events-none">
-           <div className="p-4 bg-emerald-500/20 rounded-full mb-3 text-emerald-400 animate-bounce">
+        <div className="absolute inset-0 bg-ink-accent/10 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center text-center p-6 border-2 border-ink-accent border-dashed rounded-xl pointer-events-none">
+           <div className="p-4 bg-ink-accent/20 rounded-full mb-3 text-ink-accent animate-bounce">
              <UploadCloud size={32} />
            </div>
-           <h3 className="text-emerald-400 font-bold text-xl">Drop Slip Here</h3>
-           <p className="text-emerald-200/70 text-sm">Release to auto-scan your bet</p>
+           <h3 className="text-ink-accent font-bold text-xl">Drop Slip Here</h3>
+           <p className="text-ink-accent/70 text-sm">Release to auto-scan your bet</p>
         </div>
       )}
 
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2 text-emerald-400">
+        <div className="flex items-center gap-2 text-ink-accent">
           <PlusCircle size={20} />
           <h2 className="font-semibold text-lg tracking-tight">Log New Bet</h2>
         </div>
@@ -298,7 +297,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
             type="button"
             onClick={handleScanClick}
             disabled={isAnalyzing}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all text-sm font-medium"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-ink-accent/10 text-ink-accent border border-ink-accent/20 hover:bg-ink-accent/20 transition-all text-sm font-medium"
           >
             {isAnalyzing ? <Sparkles size={16} className="animate-pulse" /> : <Camera size={16} />}
             <span>Scan Slip</span>
@@ -307,24 +306,24 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
       </div>
       
       {/* Wager Strategy Toggle */}
-      <div className="mb-5 bg-slate-950/50 rounded-lg border border-slate-800 overflow-hidden">
+      <div className="mb-5 bg-ink-base/50 rounded-lg border border-ink-gray overflow-hidden">
         <button 
           type="button"
           onClick={() => setShowStrategy(!showStrategy)}
-          className="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-slate-400 hover:bg-slate-800/50 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-ink-text/60 hover:bg-black/5 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Settings2 size={14} />
             WAGER STRATEGY
           </div>
-          <span className="text-emerald-400">{wagerPct}% Daily Bankroll</span>
+          <span className="text-ink-accent">{wagerPct}% Daily Bankroll</span>
         </button>
         
         {showStrategy && (
-           <div className="px-4 py-4 border-t border-slate-800 bg-slate-950 space-y-3 animate-in slide-in-from-top duration-200">
-             <div className="flex justify-between text-xs text-slate-400 mb-1">
+           <div className="px-4 py-4 border-t border-ink-gray bg-white space-y-3 animate-in slide-in-from-top duration-200">
+             <div className="flex justify-between text-xs text-ink-text/40 mb-1">
                <span>Conservative (1%)</span>
-               <span className="text-white font-bold">{wagerPct}%</span>
+               <span className="text-ink-text font-bold">{wagerPct}%</span>
                <span>Aggressive (25%)</span>
              </div>
              <input 
@@ -334,9 +333,9 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
                step="0.5"
                value={wagerPct}
                onChange={(e) => setWagerPct(parseFloat(e.target.value))}
-               className="w-full accent-emerald-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer"
+               className="w-full accent-ink-accent h-1.5 bg-ink-gray/50 rounded-lg appearance-none cursor-pointer"
              />
-             <p className="text-[10px] text-slate-500">
+             <p className="text-[10px] text-ink-text/60">
                Auto-calculates wager based on {wagerPct}% of your current bankroll ({formatCurrency(currentBalance)}).
                This value will be auto-filled if you scan a slip without a wager amount.
              </p>
@@ -348,23 +347,23 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Date */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-400 uppercase">Date</label>
+            <label className="text-xs font-semibold text-ink-text/60 uppercase">Date</label>
             <input
               type="date"
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-white"
+              className="w-full bg-white border border-ink-gray rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-ink-accent/50 focus:border-ink-accent outline-none transition-all text-ink-text"
             />
           </div>
 
           {/* Sport / League */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-400 uppercase">League</label>
+            <label className="text-xs font-semibold text-ink-text/60 uppercase">League</label>
             <select
               value={sport}
               onChange={(e) => setSport(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-white appearance-none"
+              className="w-full bg-white border border-ink-gray rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-ink-accent/50 focus:border-ink-accent outline-none transition-all text-ink-text appearance-none"
             >
               {SPORTS.map((s) => (
                 <option key={s} value={s}>{s}</option>
@@ -374,11 +373,11 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
 
           {/* Sportsbook */}
           <div className="space-y-1.5 md:col-span-2">
-            <label className="text-xs font-semibold text-slate-400 uppercase">Sportsbook</label>
+            <label className="text-xs font-semibold text-ink-text/60 uppercase">Sportsbook</label>
             <select
               value={sportsbook}
               onChange={(e) => setSportsbook(e.target.value as Sportsbook)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-white appearance-none"
+              className="w-full bg-white border border-ink-gray rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-ink-accent/50 focus:border-ink-accent outline-none transition-all text-ink-text appearance-none"
             >
               {SPORTSBOOKS.map((sb) => (
                 <option key={sb} value={sb}>{sb}</option>
@@ -388,33 +387,33 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
 
           {/* Matchup */}
           <div className="space-y-1.5 md:col-span-2">
-            <label className="text-xs font-semibold text-slate-400 uppercase">Matchup</label>
+            <label className="text-xs font-semibold text-ink-text/60 uppercase">Matchup</label>
             <input
               type="text"
               required
               placeholder="e.g. Chiefs vs Bills"
               value={matchup}
               onChange={(e) => setMatchup(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-white placeholder-slate-600"
+              className="w-full bg-white border border-ink-gray rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-ink-accent/50 focus:border-ink-accent outline-none transition-all text-ink-text placeholder-ink-text/30"
             />
           </div>
 
           {/* Pick */}
           <div className="space-y-1.5 md:col-span-2">
-            <label className="text-xs font-semibold text-slate-400 uppercase">Pick (Side/Total/Prop)</label>
+            <label className="text-xs font-semibold text-ink-text/60 uppercase">Pick (Side/Total/Prop)</label>
             <input
               type="text"
               required
               placeholder="e.g. Chiefs -3.5 or Kelce Anytime TD"
               value={pick}
               onChange={(e) => setPick(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-white placeholder-slate-600"
+              className="w-full bg-white border border-ink-gray rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-ink-accent/50 focus:border-ink-accent outline-none transition-all text-ink-text placeholder-ink-text/30"
             />
           </div>
 
           {/* Odds */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-400 uppercase">Odds (American)</label>
+            <label className="text-xs font-semibold text-ink-text/60 uppercase">Odds (American)</label>
             <div className="relative">
               <input
                 type="number"
@@ -422,20 +421,20 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
                 placeholder="-110"
                 value={odds}
                 onChange={(e) => setOdds(e.target.value === '' ? '' : parseInt(e.target.value))}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-white placeholder-slate-600 pl-10"
+                className="w-full bg-white border border-ink-gray rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-ink-accent/50 focus:border-ink-accent outline-none transition-all text-ink-text placeholder-ink-text/30 pl-10"
               />
-              <span className="absolute left-3 top-2.5 text-slate-500">#</span>
+              <span className="absolute left-3 top-2.5 text-ink-text/40">#</span>
             </div>
           </div>
 
           {/* Wager */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-400 uppercase flex items-center justify-between">
+            <label className="text-xs font-semibold text-ink-text/60 uppercase flex items-center justify-between">
               Wager Amount
               <button 
                  type="button" 
                  onClick={applyRecommendedWager}
-                 className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20"
+                 className="text-[10px] text-ink-accent hover:text-ink-text flex items-center gap-1 bg-ink-accent/10 px-1.5 py-0.5 rounded border border-ink-accent/20"
                  title={`Auto-fill ${wagerPct}% of bankroll`}
               >
                 <Wand2 size={10} /> Rec: {formatCurrency(calculateRecommendedWager())}
@@ -450,29 +449,29 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
                 placeholder="0.00"
                 value={wager}
                 onChange={(e) => setWager(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-white placeholder-slate-600 pl-10"
+                className="w-full bg-white border border-ink-gray rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-ink-accent/50 focus:border-ink-accent outline-none transition-all text-ink-text placeholder-ink-text/30 pl-10"
               />
-              <DollarSign size={16} className="absolute left-3 top-2.5 text-emerald-500" />
+              <DollarSign size={16} className="absolute left-3 top-2.5 text-ink-accent" />
             </div>
           </div>
         </div>
 
         {/* Live Calculation */}
-        <div className="mt-6 p-4 bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-between">
+        <div className="mt-6 p-4 bg-ink-base/50 rounded-lg border border-ink-gray flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-slate-800 rounded-md text-emerald-400">
+            <div className="p-2 bg-white border border-ink-gray rounded-md text-ink-accent">
               <Calculator size={18} />
             </div>
             <div>
-              <p className="text-slate-400 text-xs uppercase font-bold">Potential Payout</p>
-              <p className="text-slate-500 text-xs">Based on current odds</p>
+              <p className="text-ink-text/60 text-xs uppercase font-bold">Potential Payout</p>
+              <p className="text-ink-text/40 text-xs">Based on current odds</p>
             </div>
           </div>
           <div className="text-right">
-             <span className="text-xl font-bold text-white tracking-tight">
+             <span className="text-xl font-bold text-ink-text tracking-tight">
                {formatCurrency(Number(wager || 0) + calculatedPayout)}
              </span>
-             <p className="text-xs text-emerald-400 font-medium">
+             <p className="text-xs text-status-win font-medium">
                +{formatCurrency(calculatedPayout)} Profit
              </p>
           </div>
@@ -480,7 +479,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
 
         <button
           type="submit"
-          className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-900/20"
+          className="w-full bg-ink-accent hover:bg-ink-accent/90 text-white font-bold py-3 rounded-lg transition-colors shadow-lg shadow-gray-200"
         >
           Add Bet to Tracker
         </button>

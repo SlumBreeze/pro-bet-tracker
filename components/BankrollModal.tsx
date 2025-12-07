@@ -98,48 +98,48 @@ export const BankrollModal: React.FC<BankrollModalProps> = ({
   const preview = getPreviewValues();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-ink-paper border border-ink-gray rounded-2xl w-full max-w-md p-6 shadow-2xl relative overflow-hidden">
         
         {!isFirstTime && (
           <button 
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
+            className="absolute top-4 right-4 text-ink-text/40 hover:text-ink-text transition-colors"
           >
             <X size={20} />
           </button>
         )}
 
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-12 h-12 bg-emerald-500/10 rounded-full flex items-center justify-center mb-3">
-            <Wallet size={24} className="text-emerald-400" />
+          <div className="w-12 h-12 bg-ink-accent/10 rounded-full flex items-center justify-center mb-3 shadow-sm">
+            <Wallet size={24} className="text-ink-accent" />
           </div>
-          <h2 className="text-xl font-bold text-white">{isFirstTime ? 'Setup Bankroll' : 'Manage Bankroll'}</h2>
-          {!isFirstTime && <p className="text-slate-400 text-sm mt-1">Adjust your balance</p>}
+          <h2 className="text-xl font-bold text-ink-text">{isFirstTime ? 'Setup Bankroll' : 'Manage Bankroll'}</h2>
+          {!isFirstTime && <p className="text-ink-text/60 text-sm mt-1">Adjust your balance</p>}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
             
           {!isFirstTime && (
-            <div className="grid grid-cols-3 gap-2 p-1 bg-slate-950 rounded-lg border border-slate-800">
+            <div className="grid grid-cols-3 gap-2 p-1 bg-ink-base rounded-lg border border-ink-gray">
               <button
                 type="button"
                 onClick={() => setMode('deposit')}
-                className={`flex items-center justify-center gap-1 py-2 rounded-md text-xs font-bold transition-all ${mode === 'deposit' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                className={`flex items-center justify-center gap-1 py-2 rounded-md text-xs font-bold transition-all ${mode === 'deposit' ? 'bg-status-win text-white shadow-sm' : 'text-ink-text/60 hover:text-ink-text'}`}
               >
                 <Plus size={14} /> Deposit
               </button>
               <button
                 type="button"
                 onClick={() => setMode('withdraw')}
-                className={`flex items-center justify-center gap-1 py-2 rounded-md text-xs font-bold transition-all ${mode === 'withdraw' ? 'bg-rose-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                className={`flex items-center justify-center gap-1 py-2 rounded-md text-xs font-bold transition-all ${mode === 'withdraw' ? 'bg-status-loss text-white shadow-sm' : 'text-ink-text/60 hover:text-ink-text'}`}
               >
                 <Minus size={14} /> Withdraw
               </button>
               <button
                 type="button"
                 onClick={() => setMode('reset')}
-                className={`flex items-center justify-center gap-1 py-2 rounded-md text-xs font-bold transition-all ${mode === 'reset' ? 'bg-slate-700 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                className={`flex items-center justify-center gap-1 py-2 rounded-md text-xs font-bold transition-all ${mode === 'reset' ? 'bg-ink-accent text-white shadow-sm' : 'text-ink-text/60 hover:text-ink-text'}`}
               >
                 <RefreshCw size={14} /> Set New
               </button>
@@ -147,11 +147,11 @@ export const BankrollModal: React.FC<BankrollModalProps> = ({
           )}
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <label className="text-xs font-bold text-ink-text/60 uppercase tracking-wider">
               {mode === 'deposit' ? 'Deposit Amount' : mode === 'withdraw' ? 'Withdrawal Amount' : 'Target Balance'}
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-3.5 text-slate-400 text-lg">$</span>
+              <span className="absolute left-4 top-3.5 text-ink-text/40 text-lg">$</span>
               <input 
                 type="number"
                 min="0.01"
@@ -159,28 +159,28 @@ export const BankrollModal: React.FC<BankrollModalProps> = ({
                 autoFocus
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-8 pr-4 text-lg text-white font-bold focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all placeholder-slate-600"
+                className="w-full bg-white border border-ink-gray rounded-xl py-3 pl-8 pr-4 text-lg text-ink-text font-bold focus:ring-2 focus:ring-ink-accent focus:border-transparent outline-none transition-all placeholder-ink-text/30"
                 placeholder="0.00"
               />
             </div>
             {mode === 'reset' && !isFirstTime && (
-                <p className="text-[10px] text-slate-500 italic">This will calibrate your account so your Current Balance equals exactly what you enter.</p>
+                <p className="text-[10px] text-ink-text/60 italic">This will calibrate your account so your Current Balance equals exactly what you enter.</p>
             )}
           </div>
 
           {/* Preview Section for Adjustments */}
           {!isFirstTime && preview && (
-            <div className="bg-slate-800/50 rounded-lg p-3 flex items-center justify-between text-sm border border-slate-700/50">
-              <div className="text-slate-400">
+            <div className="bg-ink-base/50 rounded-lg p-3 flex items-center justify-between text-sm border border-ink-gray">
+              <div className="text-ink-text/60">
                 <p className="text-[10px] uppercase font-bold">{preview.label}</p>
                 <p>{formatCurrency(preview.currentVal)}</p>
               </div>
-              <ArrowRight size={16} className="text-slate-500" />
+              <ArrowRight size={16} className="text-ink-text/40" />
               <div className="text-right">
-                <p className={`text-[10px] uppercase font-bold ${mode === 'withdraw' ? 'text-rose-400' : 'text-emerald-400'}`}>
+                <p className={`text-[10px] uppercase font-bold ${mode === 'withdraw' ? 'text-status-loss' : 'text-status-win'}`}>
                   {preview.newLabel}
                 </p>
-                <p className="font-bold text-white">{formatCurrency(preview.newVal)}</p>
+                <p className="font-bold text-ink-text">{formatCurrency(preview.newVal)}</p>
               </div>
             </div>
           )}
@@ -190,8 +190,8 @@ export const BankrollModal: React.FC<BankrollModalProps> = ({
             disabled={!amount}
             className={`w-full font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg ${
               mode === 'withdraw' 
-                ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/20' 
-                : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 hover:shadow-emerald-500/20'
+                ? 'bg-status-loss hover:bg-rose-500 text-white' 
+                : 'bg-status-win hover:bg-emerald-500 text-white'
             }`}
           >
             {mode === 'deposit' ? 'Add Funds' : mode === 'withdraw' ? 'Withdraw Funds' : isFirstTime ? 'Start Tracking' : 'Calibrate Balance'}
