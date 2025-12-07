@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Wallet, TrendingUp, Percent, BarChart3, Activity, Settings, History, Edit2 } from 'lucide-react';
+import { Wallet, TrendingUp, Percent, BarChart3, Activity, Settings, History, Edit2, LayoutList, Calendar } from 'lucide-react';
 import { Bet, BetStatus, BankrollState, AdvancedStats, Sportsbook } from './types';
 import { calculateBankrollStats, calculateAdvancedStats, calculateBankrollHistory, formatCurrency, inferSportFromBet } from './utils/calculations';
 import { StatsCard } from './components/StatsCard';
 import { BetForm } from './components/BetForm';
 import { BetList } from './components/BetList';
+import { ProfitCalendar } from './components/ProfitCalendar';
 import { BankrollModal } from './components/BankrollModal';
 import { DataManagementModal } from './components/DataManagementModal';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
@@ -17,6 +18,7 @@ const App: React.FC = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
   const [isBankrollModalOpen, setIsBankrollModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   // 1. Load Local Data on Mount
   useEffect(() => {
@@ -264,12 +266,35 @@ const App: React.FC = () => {
 
               {/* Right Column: List */}
               <div className="lg:col-span-2">
-                <BetList 
-                  bets={bets} 
-                  onUpdateStatus={handleUpdateStatus} 
-                  onDelete={handleDeleteBet}
-                  onEdit={handleEditBet}
-                />
+                <div className="flex items-center justify-end mb-4">
+                    <div className="bg-ink-paper border border-ink-gray rounded-lg p-1 flex gap-1">
+                        <button 
+                            onClick={() => setViewMode('list')}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-ink-accent text-white shadow-sm' : 'text-ink-text/60 hover:text-ink-text'}`}
+                            title="List View"
+                        >
+                            <LayoutList size={16} />
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('calendar')}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'calendar' ? 'bg-ink-accent text-white shadow-sm' : 'text-ink-text/40 hover:text-ink-text'}`}
+                            title="Calendar View"
+                        >
+                            <Calendar size={16} />
+                        </button>
+                    </div>
+                </div>
+
+                {viewMode === 'list' ? (
+                  <BetList 
+                    bets={bets} 
+                    onUpdateStatus={handleUpdateStatus} 
+                    onDelete={handleDeleteBet}
+                    onEdit={handleEditBet}
+                  />
+                ) : (
+                  <ProfitCalendar bets={bets} />
+                )}
               </div>
             </div>
           </>

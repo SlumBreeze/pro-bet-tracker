@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PlusCircle, Calculator, DollarSign, Camera, Loader2, Sparkles, UploadCloud, Settings2, Wand2 } from 'lucide-react';
+import { PlusCircle, Calculator, DollarSign, Camera, Loader2, Sparkles, UploadCloud, Settings2, Wand2, Tag } from 'lucide-react';
 import { GoogleGenAI, Type, SchemaShared } from "@google/genai";
 import { Sportsbook, BetStatus } from '../types';
 import { calculatePotentialProfit, formatCurrency } from '../utils/calculations';
@@ -9,6 +9,8 @@ interface BetFormProps {
   onAddBet: (betData: any) => void;
   currentBalance: number;
 }
+
+const COMMON_TAGS = ['Live', 'Parlay', 'Boost', 'Prop'];
 
 export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) => {
   // Initialize with local date string instead of ISO/UTC
@@ -28,6 +30,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
   const [odds, setOdds] = useState<number | ''>(-110);
   const [wager, setWager] = useState<number | ''>('');
   const [calculatedPayout, setCalculatedPayout] = useState(0);
+  const [tags, setTags] = useState<string[]>([]);
   
   // Wager Strategy State
   const [wagerPct, setWagerPct] = useState(15);
@@ -59,6 +62,10 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
     setWager(amount);
   };
 
+  const toggleTag = (tag: string) => {
+    setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!wager || !odds || !matchup || !pick) return;
@@ -73,6 +80,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
       wager: Number(wager),
       potentialProfit: calculatedPayout,
       status: BetStatus.PENDING,
+      tags,
     });
 
     // Reset fields except date/sportsbook/sport which might remain constant for session
@@ -80,6 +88,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
     setPick('');
     setWager('');
     setCalculatedPayout(0);
+    setTags([]);
   };
 
   const handleScanClick = () => {
@@ -409,6 +418,27 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance }) =>
               onChange={(e) => setPick(e.target.value)}
               className="w-full bg-white border border-ink-gray rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-ink-accent/50 focus:border-ink-accent outline-none transition-all text-ink-text placeholder-ink-text/30"
             />
+          </div>
+
+           {/* Tags */}
+           <div className="space-y-1.5 md:col-span-2">
+              <label className="text-xs font-semibold text-ink-text/60 uppercase flex items-center gap-1"><Tag size={12}/> Tags</label>
+              <div className="flex flex-wrap gap-2">
+                {COMMON_TAGS.map(tag => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${
+                        tags.includes(tag) 
+                        ? 'bg-ink-accent text-white border-ink-accent shadow-sm' 
+                        : 'bg-white text-ink-text/60 border-ink-gray hover:border-ink-accent/50 hover:text-ink-text'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
           </div>
 
           {/* Odds */}

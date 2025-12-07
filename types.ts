@@ -35,6 +35,7 @@ export interface Bet {
   potentialProfit: number; // Calculated potential win amount (excluding wager returned)
   status: BetStatus;
   createdAt: number;
+  tags?: string[];
 }
 
 export interface BankrollState {

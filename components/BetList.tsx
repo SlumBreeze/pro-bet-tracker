@@ -20,6 +20,16 @@ interface DateGroup {
   pushes: number;
 }
 
+const getTagColor = (tag: string) => {
+  switch(tag) {
+    case 'Live': return 'bg-rose-100 text-rose-700 border-rose-200';
+    case 'Parlay': return 'bg-purple-100 text-purple-700 border-purple-200';
+    case 'Boost': return 'bg-amber-100 text-amber-700 border-amber-200';
+    case 'Prop': return 'bg-blue-100 text-blue-700 border-blue-200';
+    default: return 'bg-gray-100 text-gray-700 border-gray-200';
+  }
+}
+
 export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete, onEdit }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -356,6 +366,15 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                                 <div className="flex flex-col items-start">
                                   <span className="text-ink-text font-medium text-sm leading-tight break-words">{bet.matchup}</span>
                                   <span className="text-ink-text/60 text-xs leading-tight break-words mt-1">{bet.pick}</span>
+                                  {bet.tags && bet.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                      {bet.tags.map(tag => (
+                                        <span key={tag} className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${getTagColor(tag)}`}>
+                                          {tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
                                   <div className="sm:hidden mt-1.5">
                                     <span 
                                       className="text-[10px] font-bold uppercase tracking-wider"
@@ -601,6 +620,15 @@ export const BetList: React.FC<BetListProps> = ({ bets, onUpdateStatus, onDelete
                                     <div>
                                       <p className="text-xs font-bold text-ink-text/40 uppercase mb-0.5">{bet.sport} • <span style={{ color: theme.bg }}>{bet.sportsbook}</span></p>
                                       <h4 className="font-bold text-ink-text text-sm leading-tight">{bet.matchup}</h4>
+                                      {bet.tags && bet.tags.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                          {bet.tags.map(tag => (
+                                            <span key={tag} className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${getTagColor(tag)}`}>
+                                              {tag}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
                                     </div>
                                     <span className="font-mono font-bold text-ink-text bg-white px-2 py-1 rounded border border-ink-gray/50 text-xs shadow-sm">
                                         {bet.odds > 0 ? `+${bet.odds}` : bet.odds}
