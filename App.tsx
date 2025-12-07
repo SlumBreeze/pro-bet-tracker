@@ -12,10 +12,12 @@ import { DataManagementModal } from './components/DataManagementModal';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 
 const STORAGE_KEY_BANKROLL = 'probet_bankroll_v1';
+const OLD_STORAGE_KEY_DATA = 'probet_data_v1';
 
 const App: React.FC = () => {
   const [bets, setBets] = useState<Bet[]>([]);
-  const [startingBankroll, setStartingBankroll] = useState<number | null>(null);
+  // Default to 0 instead of null so dashboard is always visible
+  const [startingBankroll, setStartingBankroll] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
@@ -27,8 +29,26 @@ const App: React.FC = () => {
     const loadData = async () => {
       setIsSyncing(true);
       
-      // Load Bankroll from LocalStorage (User preference)
-      const savedBankroll = localStorage.getItem(STORAGE_KEY_BANKROLL);
+      // Load Bankroll
+      let savedBankroll = localStorage.getItem(STORAGE_KEY_BANKROLL);
+
+      // FALLBACK: Check old storage key if new one is missing
+      if (!savedBankroll) {
+        const oldData = localStorage.getItem(OLD_STORAGE_KEY_DATA); // Old key
+        if (oldData) {
+          try {
+            const parsed = JSON.parse(oldData);
+            if (parsed.startingBankroll !== undefined && parsed.startingBankroll !== null) {
+              savedBankroll = String(parsed.startingBankroll);
+              // Save to new key immediately so we don't check again
+              localStorage.setItem(STORAGE_KEY_BANKROLL, savedBankroll);
+            }
+          } catch (e) { 
+             console.warn('Failed to migrate old bankroll data:', e);
+          }
+        }
+      }
+
       if (savedBankroll) {
         setStartingBankroll(Number(savedBankroll));
       }
@@ -67,21 +87,21 @@ const App: React.FC = () => {
 
   // 2. Initial Setup Modal Trigger
   useEffect(() => {
-    if (isLoaded && startingBankroll === null) {
+    // Smart Modal Logic: Only open it if isLoaded is true AND bets.length === 0.
+    // Existing users with bets won't be pestered.
+    if (isLoaded && bets.length === 0) {
       setIsBankrollModalOpen(true);
     }
-  }, [isLoaded, startingBankroll]);
+  }, [isLoaded, bets.length]);
 
   // 3. Save Bankroll Changes (Local Storage only)
   useEffect(() => {
     if (!isLoaded) return;
-    if (startingBankroll !== null) {
-      localStorage.setItem(STORAGE_KEY_BANKROLL, String(startingBankroll));
-    }
+    localStorage.setItem(STORAGE_KEY_BANKROLL, String(startingBankroll));
   }, [startingBankroll, isLoaded]);
 
   const bankrollStats: BankrollState = useMemo(() => {
-    return calculateBankrollStats(startingBankroll || 0, bets);
+    return calculateBankrollStats(startingBankroll, bets);
   }, [bets, startingBankroll]);
 
   const advancedStats: AdvancedStats = useMemo(() => {
@@ -89,7 +109,7 @@ const App: React.FC = () => {
   }, [bets]);
 
   const bankrollHistory = useMemo(() => {
-    return calculateBankrollHistory(startingBankroll || 0, bets);
+    return calculateBankrollHistory(startingBankroll, bets);
   }, [startingBankroll, bets]);
 
   const handleAddBet = async (betData: Omit<Bet, 'id' | 'createdAt'>) => {
@@ -260,12 +280,11 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-             {startingBankroll !== null && (
                <div className="text-right hidden sm:block">
                  <p className="text-[10px] text-ink-text/60 uppercase font-bold tracking-wider mb-0.5">Current Balance</p>
                  <div className="flex items-center justify-end gap-2">
                     <p className={`font-mono font-bold text-lg leading-none ${
-                      bankrollStats.currentBalance >= (startingBankroll || 0) ? 'text-status-win' : 'text-status-loss'
+                      bankrollStats.currentBalance >= startingBankroll ? 'text-status-win' : 'text-status-loss'
                     }`}>
                       {formatCurrency(bankrollStats.currentBalance)}
                     </p>
@@ -278,9 +297,8 @@ const App: React.FC = () => {
                     </button>
                  </div>
                </div>
-             )}
              
-             {startingBankroll !== null && <div className="w-px h-8 bg-ink-gray hidden sm:block"></div>}
+             <div className="w-px h-8 bg-ink-gray hidden sm:block"></div>
 
              <div className="flex gap-2">
                 <button
@@ -297,8 +315,6 @@ const App: React.FC = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 flex-grow">
-        
-        {startingBankroll !== null && (
           <>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -410,7 +426,6 @@ const App: React.FC = () => {
               </div>
             </div>
           </>
-        )}
       </main>
 
       {/* Footer / Status Bar */}
