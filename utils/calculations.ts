@@ -1,5 +1,5 @@
-
 import { Bet, BetStatus, BankrollState, AdvancedStats, BankrollHistoryPoint } from '../types';
+import { NFL_TEAMS, NBA_TEAMS, MLB_TEAMS, NHL_TEAMS } from '../data/teams';
 
 /**
  * Calculates the potential profit for a given wager and American odds.
@@ -215,11 +215,8 @@ export const calculateBankrollHistory = (startingBalance: number, bets: Bet[]): 
   let currentBalance = startingBalance;
 
   // Add initial point
-  // We can pick a date before the first bet or just call it "Start"
-  // For chart continuity, let's just start calculating from the first available date
   if (sortedBets.length > 0) {
-     // Optional: Add a 'Start' point if you want the line to start from 0 index at startingBalance
-     // history.push({ date: 'Start', balance: startingBalance, formattedDate: 'Start' });
+    // Optional: Add a 'Start' point
   } else {
      // If no bets, just return current state
      return [{ date: new Date().toISOString().split('T')[0], balance: startingBalance, formattedDate: 'Today' }];
@@ -227,10 +224,6 @@ export const calculateBankrollHistory = (startingBalance: number, bets: Bet[]): 
 
   // Iterate through sorted unique dates
   const uniqueDates = Object.keys(dailyPnL).sort();
-  
-  // If there are bets, assume the balance started at `startingBalance` BEFORE the first bet
-  // So we push an initial point one day before the first bet, or just the starting balance at the first date's start?
-  // Let's just push the sequence.
   
   history.push({
       date: 'Start', 
@@ -269,15 +262,13 @@ export const formatDate = (dateStr: string) => {
   });
 };
 
-// --- Sport Inference Data ---
-// (Keeping existing inference logic hidden for brevity as it was not requested to be changed, but included in full file output)
-
-const NFL_TEAMS = [
-  "Arizona Cardinals", "Atlanta Falcons", "Baltimore Ravens", "Buffalo Bills", "Carolina Panthers", "Chicago Bears", "Cincinnati Bengals", "Cleveland Browns", "Dallas Cowboys", "Denver Broncos", "Detroit Lions", "Green Bay Packers", "Houston Texans", "Indianapolis Colts", "Jacksonville Jaguars", "Kansas City Chiefs", "Las Vegas Raiders", "Los Angeles Chargers", "Los Angeles Rams", "Miami Dolphins", "Minnesota Vikings", "New England Patriots", "New Orleans Saints", "New York Giants", "New York Jets", "Philadelphia Eagles", "Pittsburgh Steelers", "San Francisco 49ers", "Seattle Seahawks", "Tampa Bay Buccaneers", "Tennessee Titans", "Washington Commanders"
-];
-// ... (omitting lengthy arrays for brevity in diff, they remain in file) ...
-
 export const inferSportFromBet = (bet: Partial<Bet>): string => {
-   // ... (existing implementation) ...
-   return 'Other'; // Placeholder for diff
+   const text = `${bet.matchup || ''} ${bet.pick || ''}`.toLowerCase();
+   
+   if (NFL_TEAMS.some(t => text.includes(t.toLowerCase()))) return 'NFL';
+   if (NBA_TEAMS.some(t => text.includes(t.toLowerCase()))) return 'NBA';
+   if (MLB_TEAMS.some(t => text.includes(t.toLowerCase()))) return 'MLB';
+   if (NHL_TEAMS.some(t => text.includes(t.toLowerCase()))) return 'NHL';
+   
+   return 'Other';
 };
