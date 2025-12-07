@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Wallet, TrendingUp, Percent, BarChart3, Activity, Settings, History, Edit2, LayoutList, Calendar } from 'lucide-react';
+import { Wallet, TrendingUp, Percent, BarChart3, Activity, Settings, History, Edit2, LayoutList, Calendar, Loader2 } from 'lucide-react';
+import { supabase } from './lib/supabase';
 import { Bet, BetStatus, BankrollState, AdvancedStats, Sportsbook } from './types';
 import { calculateBankrollStats, calculateAdvancedStats, calculateBankrollHistory, formatCurrency, inferSportFromBet } from './utils/calculations';
 import { StatsCard } from './components/StatsCard';
@@ -10,38 +11,58 @@ import { BankrollModal } from './components/BankrollModal';
 import { DataManagementModal } from './components/DataManagementModal';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 
-const STORAGE_KEY = 'probet_data_v1';
+const STORAGE_KEY_BANKROLL = 'probet_bankroll_v1';
 
 const App: React.FC = () => {
   const [bets, setBets] = useState<Bet[]>([]);
   const [startingBankroll, setStartingBankroll] = useState<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
   const [isBankrollModalOpen, setIsBankrollModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
-  // 1. Load Local Data on Mount
+  // 1. Load Data on Mount (Supabase for Bets, LocalStorage for Bankroll Settings)
   useEffect(() => {
-    const savedData = localStorage.getItem(STORAGE_KEY);
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        let loadedBets = parsed.bets || [];
-        // Migration: Add sport if missing using inference, and rename ESPN Bet to theScore Bet
-        loadedBets = loadedBets.map((b: any) => ({
-           ...b,
-           sport: (b.sport && b.sport !== 'Other') ? b.sport : inferSportFromBet(b),
-           sportsbook: b.sportsbook === 'ESPN Bet' ? Sportsbook.THESCOREBET : b.sportsbook
-        }));
-        setBets(loadedBets);
-        if (parsed.startingBankroll !== undefined && parsed.startingBankroll !== null) {
-          setStartingBankroll(Number(parsed.startingBankroll));
-        }
-      } catch (e) {
-        console.error("Failed to parse saved data", e);
+    const loadData = async () => {
+      setIsSyncing(true);
+      
+      // Load Bankroll from LocalStorage (User preference)
+      const savedBankroll = localStorage.getItem(STORAGE_KEY_BANKROLL);
+      if (savedBankroll) {
+        setStartingBankroll(Number(savedBankroll));
       }
-    }
-    setIsLoaded(true);
+
+      // Load Bets from Supabase
+      try {
+        const { data, error } = await supabase
+          .from('bets')
+          .select('*')
+          .order('createdAt', { ascending: false });
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          // Sanitize data: ensure numerical values are numbers (BigInt returns as string often)
+          const safeData = data.map((b: any) => ({
+            ...b,
+            createdAt: Number(b.createdAt), 
+            tags: b.tags || []
+          }));
+          setBets(safeData as Bet[]);
+        }
+      } catch (err: any) {
+        console.error('Error loading bets from Supabase:', err.message || err);
+        // Optional: show a UI toast here if needed
+      } finally {
+        setIsLoaded(true);
+        setIsSyncing(false);
+      }
+    };
+
+    loadData();
   }, []);
 
   // 2. Initial Setup Modal Trigger
@@ -51,14 +72,13 @@ const App: React.FC = () => {
     }
   }, [isLoaded, startingBankroll]);
 
-  // 3. Save Changes (Local Storage)
+  // 3. Save Bankroll Changes (Local Storage only)
   useEffect(() => {
     if (!isLoaded) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      bets,
-      startingBankroll
-    }));
-  }, [bets, startingBankroll, isLoaded]);
+    if (startingBankroll !== null) {
+      localStorage.setItem(STORAGE_KEY_BANKROLL, String(startingBankroll));
+    }
+  }, [startingBankroll, isLoaded]);
 
   const bankrollStats: BankrollState = useMemo(() => {
     return calculateBankrollStats(startingBankroll || 0, bets);
@@ -72,41 +92,125 @@ const App: React.FC = () => {
     return calculateBankrollHistory(startingBankroll || 0, bets);
   }, [startingBankroll, bets]);
 
-  const handleAddBet = (betData: Omit<Bet, 'id' | 'createdAt'>) => {
+  const handleAddBet = async (betData: Omit<Bet, 'id' | 'createdAt'>) => {
     const newBet: Bet = {
       ...betData,
       id: crypto.randomUUID(),
       createdAt: Date.now(),
+      tags: betData.tags || [], // Ensure tags is defined for SQL
     };
+
+    // Optimistic Update
     setBets(prev => [newBet, ...prev]);
+
+    try {
+      const { error } = await supabase.from('bets').insert([newBet]);
+      if (error) {
+        console.error('Supabase insert error:', error.message);
+        // Revert on error
+        setBets(prev => prev.filter(b => b.id !== newBet.id));
+        alert(`Failed to save bet: ${error.message}`);
+      }
+    } catch (err: any) {
+      console.error('Insert exception:', err);
+      setBets(prev => prev.filter(b => b.id !== newBet.id));
+      alert('Error saving bet. See console.');
+    }
   };
 
-  const handleUpdateStatus = (id: string, status: BetStatus) => {
+  const handleUpdateStatus = async (id: string, status: BetStatus) => {
+    // Optimistic Update
     setBets(prev => prev.map(bet => {
       if (bet.id !== id) return bet;
       return { ...bet, status };
     }));
+
+    try {
+      const { error } = await supabase
+        .from('bets')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Supabase update status error:', err.message);
+      alert('Failed to update status in cloud. Refreshing...');
+    }
   };
 
-  const handleEditBet = (updatedBet: Bet) => {
+  const handleEditBet = async (updatedBet: Bet) => {
+    // Optimistic Update
     setBets(prev => prev.map(b => b.id === updatedBet.id ? updatedBet : b));
+
+    try {
+      const { error } = await supabase
+        .from('bets')
+        .update({
+          matchup: updatedBet.matchup,
+          pick: updatedBet.pick,
+          odds: updatedBet.odds,
+          wager: updatedBet.wager,
+          potentialProfit: updatedBet.potentialProfit,
+          sportsbook: updatedBet.sportsbook,
+          tags: updatedBet.tags
+        })
+        .eq('id', updatedBet.id);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Supabase edit error:', err.message);
+      alert('Failed to update bet in cloud.');
+    }
   };
 
-  const handleDeleteBet = (id: string) => {
+  const handleDeleteBet = async (id: string) => {
+    // Optimistic Update
+    const previousBets = [...bets];
     setBets(prev => prev.filter(b => b.id !== id));
+
+    try {
+      const { error } = await supabase
+        .from('bets')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Supabase delete error:', err.message);
+      // Revert
+      setBets(previousBets);
+      alert('Failed to delete bet from cloud.');
+    }
   };
 
-  const handleImportData = (data: { bets: Bet[], startingBankroll?: number }) => {
+  const handleImportData = async (data: { bets: Bet[], startingBankroll?: number }) => {
     const isCleanState = bets.length === 0;
-    if (isCleanState || confirm(`Found ${data.bets.length} bets. This will replace your current betting log. Continue?`)) {
+    if (isCleanState || confirm(`This will import ${data.bets.length} bets. Continue?`)) {
+      setIsSyncing(true);
       const processedBets = data.bets.map((b: any) => ({
         ...b,
         sport: (b.sport && b.sport !== 'Other') ? b.sport : inferSportFromBet(b),
-        sportsbook: b.sportsbook === 'ESPN Bet' ? Sportsbook.THESCOREBET : b.sportsbook
+        sportsbook: b.sportsbook === 'ESPN Bet' ? Sportsbook.THESCOREBET : b.sportsbook,
+        tags: b.tags || []
       }));
-      setBets(processedBets);
+
+      // Update Local State
+      setBets(prev => [...processedBets, ...prev]); // Append imported bets
+      
       if (data.startingBankroll !== undefined && data.startingBankroll !== null) {
         setStartingBankroll(data.startingBankroll);
+      }
+
+      // Bulk Insert to Supabase
+      try {
+        const { error } = await supabase.from('bets').insert(processedBets);
+        if (error) throw error;
+        alert('Import successful and synced to cloud!');
+      } catch (err: any) {
+        console.error('Supabase import error:', err.message);
+        alert(`Imported locally, but failed to sync to cloud: ${err.message}`);
+      } finally {
+        setIsSyncing(false);
       }
     }
   };
@@ -116,7 +220,14 @@ const App: React.FC = () => {
     setIsBankrollModalOpen(false);
   };
 
-  if (!isLoaded) return null;
+  if (!isLoaded) return (
+    <div className="min-h-screen bg-ink-base flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="animate-spin text-ink-accent" size={32} />
+        <p className="text-ink-text/60 font-medium">Loading your betting history...</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-ink-base pb-20 flex flex-col font-sans">
@@ -145,6 +256,7 @@ const App: React.FC = () => {
             <h1 className="text-xl font-bold text-ink-text tracking-tight">
               ProBet Tracker
             </h1>
+            {isSyncing && <Loader2 size={14} className="animate-spin text-ink-text/40 ml-2" />}
           </div>
           
           <div className="flex items-center gap-4">
@@ -304,7 +416,7 @@ const App: React.FC = () => {
       {/* Footer / Status Bar */}
       <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full text-center sm:text-left">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-ink-text/40">
-             <p>© 2024 ProBet Tracker. Data stored locally.</p>
+             <p>© 2024 ProBet Tracker. Cloud Sync Active.</p>
           </div>
       </footer>
     </div>
