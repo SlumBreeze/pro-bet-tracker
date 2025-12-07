@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wallet, TrendingUp, Percent, BarChart3, Activity, Settings, History, Edit2 } from 'lucide-react';
 import { Bet, BetStatus, BankrollState, AdvancedStats, Sportsbook } from './types';
-import { calculateBankrollStats, calculateAdvancedStats, formatCurrency, inferSportFromBet } from './utils/calculations';
+import { calculateBankrollStats, calculateAdvancedStats, calculateBankrollHistory, formatCurrency, inferSportFromBet } from './utils/calculations';
 import { StatsCard } from './components/StatsCard';
 import { BetForm } from './components/BetForm';
 import { BetList } from './components/BetList';
@@ -65,6 +65,10 @@ const App: React.FC = () => {
   const advancedStats: AdvancedStats = useMemo(() => {
     return calculateAdvancedStats(bets);
   }, [bets]);
+
+  const bankrollHistory = useMemo(() => {
+    return calculateBankrollHistory(startingBankroll || 0, bets);
+  }, [startingBankroll, bets]);
 
   const handleAddBet = (betData: Omit<Bet, 'id' | 'createdAt'>) => {
     const newBet: Bet = {
@@ -230,7 +234,7 @@ const App: React.FC = () => {
                   Performance Analytics
                 </h3>
               </div>
-              <AnalyticsDashboard stats={advancedStats} />
+              <AnalyticsDashboard stats={advancedStats} bankrollHistory={bankrollHistory} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

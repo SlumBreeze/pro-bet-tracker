@@ -59,3 +59,9 @@ export interface AdvancedStats {
   bookPerformance: { name: string; profit: number; wins: number; losses: number; winRate: number }[];
   teamPerformance: { name: string; profit: number; wins: number; losses: number }[]; // Inferred from Pick
 }
+
+export interface BankrollHistoryPoint {
+  date: string;
+  balance: number;
+  formattedDate: string;
+}

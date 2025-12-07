@@ -1,18 +1,23 @@
 import React from 'react';
-import { AdvancedStats } from '../types';
+import { AdvancedStats, BankrollHistoryPoint } from '../types';
 import { formatCurrency } from '../utils/calculations';
 import { Trophy, AlertTriangle } from 'lucide-react';
+import { BankrollTrendChart } from './BankrollTrendChart';
 
 interface AnalyticsDashboardProps {
   stats: AdvancedStats;
+  bankrollHistory: BankrollHistoryPoint[];
 }
 
-export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stats }) => {
+export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stats, bankrollHistory }) => {
   // If no data, don't show dashboard
   if (stats.last10.length === 0) return null;
 
   return (
     <div className="space-y-6">
+      
+      {/* Chart Section */}
+      <BankrollTrendChart data={bankrollHistory} />
       
       {/* Hot/Cold Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
