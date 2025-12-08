@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wallet, TrendingUp, Percent, BarChart3, Activity, Settings, History, Edit2, LayoutList, Calendar, Loader2 } from 'lucide-react';
 import { supabase } from './lib/supabase';
-import { Bet, BetStatus, BankrollState, AdvancedStats, Sportsbook } from './types';
-import { calculateBankrollStats, calculateAdvancedStats, calculateBankrollHistory, formatCurrency, inferSportFromBet } from './utils/calculations';
+import { Bet, BetStatus, BankrollState, AdvancedStats, Sportsbook, BookDeposit } from './types';
+import { calculateBankrollStats, calculateAdvancedStats, calculateBankrollHistory, calculateBookBalances, formatCurrency, inferSportFromBet } from './utils/calculations';
 import { StatsCard } from './components/StatsCard';
 import { BetForm } from './components/BetForm';
 import { BetList } from './components/BetList';
@@ -13,32 +13,39 @@ import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 
 const App: React.FC = () => {
   const [bets, setBets] = useState<Bet[]>([]);
-  // Default to 0 instead of null so dashboard is always visible
-  const [startingBankroll, setStartingBankroll] = useState<number>(0);
+  // Use bookDeposits array instead of single number
+  const [bookDeposits, setBookDeposits] = useState<BookDeposit[]>([]);
+  
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
   const [isBankrollModalOpen, setIsBankrollModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
-  // 1. Load Data on Mount (Supabase for Bets AND Bankroll)
+  // 1. Load Data on Mount (Supabase for Bets AND Book Balances)
   useEffect(() => {
     const loadData = async () => {
       setIsSyncing(true);
       
-      // Fetch Bankroll from Cloud
+      // Fetch Book Balances from Cloud
       try {
-        const { data: settings } = await supabase
-          .from('settings')
-          .select('starting_balance')
-          .eq('id', 1)
-          .single();
+        const { data: books, error } = await supabase
+          .from('book_balances')
+          .select('sportsbook, deposited');
         
-        if (settings) {
-          setStartingBankroll(settings.starting_balance);
+        if (error) throw error;
+
+        if (books) {
+          setBookDeposits(books as BookDeposit[]);
         }
-      } catch (err) {
-        console.error('Error loading bankroll settings from Supabase:', err);
+      } catch (err: any) {
+        // Gracefully handle missing table error
+        const msg = err.message || JSON.stringify(err);
+        if (msg.includes('Could not find the table') || msg.includes('relation "public.book_balances" does not exist')) {
+            console.warn('Database table "book_balances" is missing. Please run the SQL migration.');
+        } else {
+            console.error('Error loading book balances from Supabase:', msg);
+        }
       }
 
       // Load Bets from Supabase
@@ -74,42 +81,59 @@ const App: React.FC = () => {
 
   // 2. Initial Setup Modal Trigger
   useEffect(() => {
-    // Smart Modal Logic: Only open it if isLoaded is true AND bets.length === 0.
-    // Existing users with bets won't be pestered.
-    if (isLoaded && bets.length === 0) {
+    // Smart Modal Logic: Only open it if isLoaded is true AND no deposits exist (new user)
+    // Checking bets.length is a fallback, but deposits check is more accurate for "setup"
+    if (isLoaded && bookDeposits.length === 0 && bets.length === 0) {
       setIsBankrollModalOpen(true);
     }
-  }, [isLoaded, bets.length]);
+  }, [isLoaded, bookDeposits.length, bets.length]);
 
-  // 3. Update Bankroll Function (Cloud Sync)
-  const handleUpdateBankroll = async (amount: number) => {
-    setStartingBankroll(amount);
-    setIsBankrollModalOpen(false);
+  // 3. Update Individual Book Deposit (Cloud Sync)
+  const handleUpdateBookDeposit = async (sportsbook: string, amount: number) => {
+    // Optimistic Update
+    setBookDeposits(prev => {
+        const exists = prev.find(b => b.sportsbook === sportsbook);
+        if (exists) {
+            return prev.map(b => b.sportsbook === sportsbook ? { ...b, deposited: amount } : b);
+        }
+        return [...prev, { sportsbook, deposited: amount }];
+    });
 
     try {
-      // Using upsert to handle both insert (first time) and update
+      // Using upsert based on unique sportsbook constraint
       const { error } = await supabase
-        .from('settings')
-        .upsert({ id: 1, starting_balance: amount });
+        .from('book_balances')
+        .upsert({ sportsbook, deposited: amount }, { onConflict: 'sportsbook' });
       
       if (error) throw error;
     } catch (err: any) {
-      console.error('Error syncing bankroll to cloud:', err.message);
-      alert('Failed to sync bankroll settings to the cloud.');
+      const msg = err.message || JSON.stringify(err);
+      console.error('Error syncing book balance to cloud:', msg);
+      
+      if (msg.includes('Could not find the table') || msg.includes('relation "public.book_balances" does not exist')) {
+        alert("Setup Required: The 'book_balances' table is missing in Supabase.\n\nPlease run the SQL script provided in the instructions to create it.");
+      } else {
+        // Silent fail or optional alert for other errors
+        // alert('Failed to sync book balance to the cloud.');
+      }
     }
   };
 
   const bankrollStats: BankrollState = useMemo(() => {
-    return calculateBankrollStats(startingBankroll, bets);
-  }, [bets, startingBankroll]);
+    return calculateBankrollStats(bookDeposits, bets);
+  }, [bets, bookDeposits]);
+
+  const bookBalances = useMemo(() => {
+      return calculateBookBalances(bets, bookDeposits);
+  }, [bets, bookDeposits]);
 
   const advancedStats: AdvancedStats = useMemo(() => {
     return calculateAdvancedStats(bets);
   }, [bets]);
 
   const bankrollHistory = useMemo(() => {
-    return calculateBankrollHistory(startingBankroll, bets);
-  }, [startingBankroll, bets]);
+    return calculateBankrollHistory(bankrollStats.startingBalance, bets);
+  }, [bankrollStats.startingBalance, bets]);
 
   const handleAddBet = async (betData: Omit<Bet, 'id' | 'createdAt'>) => {
     const newBet: Bet = {
@@ -203,6 +227,8 @@ const App: React.FC = () => {
   };
 
   const handleImportData = async (data: { bets: Bet[], startingBankroll?: number }) => {
+     // NOTE: Import logic for bankroll is tricky with multi-book. 
+     // For now, we just import bets. Bankroll management should be done via new modal.
     const isCleanState = bets.length === 0;
     if (isCleanState || confirm(`This will import ${data.bets.length} bets. Continue?`)) {
       setIsSyncing(true);
@@ -214,19 +240,7 @@ const App: React.FC = () => {
       }));
 
       // Update Local State
-      setBets(prev => [...processedBets, ...prev]); // Append imported bets
-      
-      // Update Bankroll if present in import
-      if (data.startingBankroll !== undefined && data.startingBankroll !== null) {
-        setStartingBankroll(data.startingBankroll);
-        try {
-          await supabase
-            .from('settings')
-            .upsert({ id: 1, starting_balance: data.startingBankroll });
-        } catch (e) {
-          console.error("Failed to sync imported bankroll to cloud", e);
-        }
-      }
+      setBets(prev => [...processedBets, ...prev]); 
 
       // Bulk Insert to Supabase
       try {
@@ -257,15 +271,15 @@ const App: React.FC = () => {
         isOpen={isDataModalOpen}
         onClose={() => setIsDataModalOpen(false)}
         onImport={handleImportData}
-        currentData={{ bets, startingBankroll }}
+        currentData={{ bets, startingBankroll: bankrollStats.startingBalance }}
       />
 
       <BankrollModal 
         isOpen={isBankrollModalOpen}
         onClose={() => setIsBankrollModalOpen(false)}
-        onSetBankroll={handleUpdateBankroll}
-        currentStartingBankroll={startingBankroll}
-        currentBalance={bankrollStats.currentBalance}
+        onUpdateBookDeposit={handleUpdateBookDeposit}
+        bookBalances={bookBalances}
+        totalBankroll={bankrollStats.currentBalance}
       />
 
       {/* Header */}
@@ -283,18 +297,19 @@ const App: React.FC = () => {
           
           <div className="flex items-center gap-4">
                <div className="text-right hidden sm:block">
-                 <p className="text-[10px] text-ink-text/60 uppercase font-bold tracking-wider mb-0.5">Current Balance</p>
+                 <p className="text-[10px] text-ink-text/60 uppercase font-bold tracking-wider mb-0.5">Total Balance</p>
                  <div className="flex items-center justify-end gap-2">
                     <p className={`font-mono font-bold text-lg leading-none ${
-                      bankrollStats.currentBalance >= startingBankroll ? 'text-status-win' : 'text-status-loss'
+                      bankrollStats.currentBalance >= bankrollStats.startingBalance ? 'text-status-win' : 'text-status-loss'
                     }`}>
                       {formatCurrency(bankrollStats.currentBalance)}
                     </p>
                     <button 
                       onClick={() => setIsBankrollModalOpen(true)}
-                      className="p-1 rounded-md text-ink-text/40 hover:text-ink-accent hover:bg-ink-accent/10 transition-all"
-                      title="Manage Bankroll"
+                      className="p-1 rounded-md text-ink-text/40 hover:text-ink-accent hover:bg-ink-accent/10 transition-all flex items-center gap-1"
+                      title="Manage Books"
                     >
+                      <span className="text-xs font-bold px-1">Manage Books</span>
                       <Edit2 size={14} />
                     </button>
                  </div>
@@ -321,10 +336,10 @@ const App: React.FC = () => {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <StatsCard 
-                label="Bankroll" 
+                label="Total Bankroll" 
                 value={formatCurrency(bankrollStats.currentBalance)}
-                subValue={`${bankrollStats.currentBalance >= startingBankroll ? '+' : ''}${formatCurrency(bankrollStats.currentBalance - startingBankroll)} Net`}
-                trend={bankrollStats.currentBalance >= startingBankroll ? 'up' : 'down'}
+                subValue={`${bankrollStats.currentBalance >= bankrollStats.startingBalance ? '+' : ''}${formatCurrency(bankrollStats.currentBalance - bankrollStats.startingBalance)} Net`}
+                trend={bankrollStats.currentBalance >= bankrollStats.startingBalance ? 'up' : 'down'}
                 icon={<Wallet size={20} />}
                 highlight
               />
@@ -376,6 +391,7 @@ const App: React.FC = () => {
                   <BetForm 
                     onAddBet={handleAddBet} 
                     currentBalance={bankrollStats.currentBalance}
+                    bookBalances={bookBalances}
                   />
                   
                   {/* Mini Insight / Tip Box */}

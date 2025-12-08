@@ -1,5 +1,6 @@
-import { Bet, BetStatus, BankrollState, AdvancedStats, BankrollHistoryPoint } from '../types';
+import { Bet, BetStatus, BankrollState, AdvancedStats, BankrollHistoryPoint, BookDeposit, BookBalanceDisplay } from '../types';
 import { NFL_TEAMS, NBA_TEAMS, MLB_TEAMS, NHL_TEAMS } from '../data/teams';
+import { SPORTSBOOKS } from '../constants';
 
 /**
  * Calculates the potential profit for a given wager and American odds.
@@ -19,8 +20,46 @@ export const calculatePotentialProfit = (wager: number, odds: number): number =>
   return Math.round(profit * 100) / 100;
 };
 
-export const calculateBankrollStats = (startingBalance: number, bets: Bet[]): BankrollState => {
-  let currentBalance = startingBalance;
+export const calculateBookBalances = (bets: Bet[], deposits: BookDeposit[]): BookBalanceDisplay[] => {
+  // Map of sportsbook -> PnL (including pending deduction if desired, usually pending reduces available balance)
+  const balanceChanges: Record<string, number> = {};
+
+  bets.forEach(bet => {
+    const sb = bet.sportsbook;
+    if (!balanceChanges[sb]) balanceChanges[sb] = 0;
+
+    if (bet.status === BetStatus.WON) {
+      balanceChanges[sb] += bet.potentialProfit;
+    } else if (bet.status === BetStatus.LOST) {
+      balanceChanges[sb] -= bet.wager;
+    } else if (bet.status === BetStatus.PENDING) {
+      // Deduct wager from current balance for pending bets
+      balanceChanges[sb] -= bet.wager;
+    }
+    // Push does not change balance (wager returned, no profit)
+  });
+
+  return SPORTSBOOKS.map(sb => {
+    const depositObj = deposits.find(d => d.sportsbook === sb);
+    const deposited = depositObj ? depositObj.deposited : 0;
+    const change = balanceChanges[sb] || 0;
+    
+    return {
+      sportsbook: sb,
+      deposited,
+      currentBalance: deposited + change
+    };
+  });
+};
+
+export const calculateBankrollStats = (deposits: BookDeposit[], bets: Bet[]): BankrollState => {
+  // Total Deposited
+  const startingBalance = deposits.reduce((sum, d) => sum + d.deposited, 0);
+
+  // Calculate current total balance (Sum of all books)
+  const bookBalances = calculateBookBalances(bets, deposits);
+  const currentBalance = bookBalances.reduce((sum, b) => sum + b.currentBalance, 0);
+
   let totalWagered = 0;
   let totalWon = 0; // Net profit
   let totalLost = 0;
@@ -33,10 +72,8 @@ export const calculateBankrollStats = (startingBalance: number, bets: Bet[]): Ba
   let flatBetsSettled = 0;
 
   bets.forEach((bet) => {
-    // Only count settled bets towards W-L record
     if (bet.status !== BetStatus.PENDING) {
       if (bet.status === BetStatus.WON) {
-        currentBalance += bet.potentialProfit;
         totalWon += bet.potentialProfit;
         totalWagered += bet.wager;
         wins++;
@@ -47,7 +84,6 @@ export const calculateBankrollStats = (startingBalance: number, bets: Bet[]): Ba
         flatBetsSettled++;
 
       } else if (bet.status === BetStatus.LOST) {
-        currentBalance -= bet.wager;
         totalLost += bet.wager;
         totalWagered += bet.wager;
         losses++;
@@ -57,30 +93,26 @@ export const calculateBankrollStats = (startingBalance: number, bets: Bet[]): Ba
         flatBetsSettled++;
 
       } else if (bet.status === BetStatus.PUSH) {
-        // Money back, no change in balance, but tracked
         totalWagered += bet.wager;
         pushes++;
-        // Pushes are void for Flat ROI (0 units won, 0 units risked)
       }
     } else {
-        // Pending bets: Deduct wager from available balance
-        currentBalance -= bet.wager;
+        // Pending bets are not counted in settled wager stats, 
+        // but they are deducted from currentBalance inside calculateBookBalances
     }
   });
 
-  const totalSettledBets = wins + losses + pushes;
-  const netProfit = totalWon - totalLost;
-  
   const settledWagered = bets
     .filter(b => b.status !== BetStatus.PENDING)
     .reduce((acc, b) => acc + b.wager, 0);
 
+  const netProfit = totalWon - totalLost;
   const roi = settledWagered > 0 ? (netProfit / settledWagered) * 100 : 0;
   const flatROI = flatBetsSettled > 0 ? (flatUnitsWon / flatBetsSettled) * 100 : 0;
 
   return {
-    startingBalance,
-    currentBalance,
+    startingBalance, // Total Deposited
+    currentBalance,  // Total Available
     totalWagered,
     totalWon,
     totalLost,
@@ -214,14 +246,6 @@ export const calculateBankrollHistory = (startingBalance: number, bets: Bet[]): 
   const history: BankrollHistoryPoint[] = [];
   let currentBalance = startingBalance;
 
-  // Add initial point
-  if (sortedBets.length > 0) {
-    // Optional: Add a 'Start' point
-  } else {
-     // If no bets, just return current state
-     return [{ date: new Date().toISOString().split('T')[0], balance: startingBalance, formattedDate: 'Today' }];
-  }
-
   // Iterate through sorted unique dates
   const uniqueDates = Object.keys(dailyPnL).sort();
   
@@ -239,6 +263,11 @@ export const calculateBankrollHistory = (startingBalance: number, bets: Bet[]): 
       formattedDate: formatDate(date).split(',')[0] // "Oct 25"
     });
   });
+  
+  // If no history, ensure at least start point is there
+  if (history.length === 0) {
+      history.push({ date: 'Start', balance: startingBalance, formattedDate: 'Start' });
+  }
 
   return history;
 };

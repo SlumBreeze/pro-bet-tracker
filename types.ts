@@ -38,9 +38,20 @@ export interface Bet {
   tags?: string[];
 }
 
-export interface BankrollState {
-  startingBalance: number;
+export interface BookDeposit {
+  sportsbook: string;
+  deposited: number;
+}
+
+export interface BookBalanceDisplay {
+  sportsbook: string;
+  deposited: number;
   currentBalance: number;
+}
+
+export interface BankrollState {
+  startingBalance: number; // Represents Total Deposited across all books
+  currentBalance: number;  // Total current balance across all books
   totalWagered: number;
   totalWon: number; // Pure profit
   totalLost: number;
