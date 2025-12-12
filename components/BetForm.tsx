@@ -237,7 +237,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance, book
                 <input 
                   type="range" 
                   min="0.5" 
-                  max="5" 
+                  max="15" 
                   step="0.5" 
                   value={wagerPct}
                   onChange={(e) => setWagerPct(Number(e.target.value))}
