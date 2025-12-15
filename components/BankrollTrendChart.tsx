@@ -18,9 +18,27 @@ export const BankrollTrendChart: React.FC<BankrollTrendChartProps> = ({ data }) 
 
   // Determine min/max for domain to make chart look dynamic
   const balances = data.map(d => d.balance);
-  const min = Math.min(...balances);
-  const max = Math.max(...balances);
-  const buffer = (max - min) * 0.1;
+  let min = Math.min(...balances);
+  let max = Math.max(...balances);
+  
+  // Handle edge case where min equals max (flat line)
+  if (min === max) {
+    min -= 100;
+    max += 100;
+  }
+
+  const range = max - min;
+  const buffer = range * 0.1;
+  const showDecimals = range < 10; // Only show cents if the range is very tight
+
+  const formatAxisTick = (val: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: showDecimals ? 2 : 0,
+      notation: val > 100000 ? 'compact' : 'standard'
+    }).format(val);
+  };
 
   return (
     <div className="bg-ink-paper/50 backdrop-blur-sm border border-ink-gray rounded-xl p-5 shadow-sm">
@@ -54,8 +72,9 @@ export const BankrollTrendChart: React.FC<BankrollTrendChartProps> = ({ data }) 
               axisLine={false}
               tickLine={false}
               tick={{ fill: '#4A4A4A', fontSize: 10, opacity: 0.6 }}
-              tickFormatter={(val) => `$${val}`}
+              tickFormatter={formatAxisTick}
               domain={[min - buffer, max + buffer]}
+              width={60}
             />
             <Tooltip 
               contentStyle={{ 

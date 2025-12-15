@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PlusCircle, Calculator, DollarSign, Camera, Loader2, Sparkles, UploadCloud, Settings2, Wand2, Tag, AlertTriangle } from 'lucide-react';
+import { PlusCircle, Calculator, DollarSign, Camera, Loader2, Sparkles, UploadCloud, Settings2, Wand2, Tag, AlertTriangle, Calendar } from 'lucide-react';
 import { GoogleGenAI, Type, SchemaShared } from "@google/genai";
 import { Sportsbook, BetStatus, BookBalanceDisplay } from '../types';
 import { calculatePotentialProfit, formatCurrency } from '../utils/calculations';
@@ -260,9 +260,21 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance, book
 
         {/* Main Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          {/* Row 1: Matchup & Pick */}
-          <div className="space-y-4">
-             <div className="relative">
+          {/* Row 1: Date & Matchup */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+             <div className="relative sm:col-span-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-text/40">
+                   <Calendar size={14} />
+                </span>
+                <input 
+                  type="date" 
+                  required
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full bg-ink-base border border-ink-gray rounded-xl pl-9 pr-2 py-3 text-sm font-medium focus:border-ink-accent outline-none appearance-none cursor-pointer"
+                />
+             </div>
+             <div className="relative sm:col-span-2">
                 <input 
                   type="text" 
                   placeholder="Matchup (e.g. Lakers vs Celtics)"
@@ -271,18 +283,20 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance, book
                   className="w-full bg-ink-base border border-ink-gray rounded-xl px-4 py-3 text-sm font-medium focus:border-ink-accent outline-none transition-all placeholder:text-ink-text/30"
                 />
              </div>
-             <div className="relative">
-                <input 
-                  type="text" 
-                  placeholder="Pick (e.g. Lakers -5.5)"
-                  value={pick}
-                  onChange={(e) => setPick(e.target.value)}
-                  className="w-full bg-ink-base border border-ink-gray rounded-xl px-4 py-3 text-sm font-medium focus:border-ink-accent outline-none transition-all placeholder:text-ink-text/30"
-                />
-             </div>
           </div>
 
-          {/* Row 2: Selects */}
+          {/* Row 2: Pick */}
+          <div className="relative">
+            <input 
+              type="text" 
+              placeholder="Pick (e.g. Lakers -5.5)"
+              value={pick}
+              onChange={(e) => setPick(e.target.value)}
+              className="w-full bg-ink-base border border-ink-gray rounded-xl px-4 py-3 text-sm font-medium focus:border-ink-accent outline-none transition-all placeholder:text-ink-text/30"
+            />
+          </div>
+
+          {/* Row 3: Selects */}
           <div className="grid grid-cols-2 gap-4">
             <select 
               value={sport}
@@ -301,7 +315,7 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance, book
             </select>
           </div>
 
-          {/* Row 3: Numbers */}
+          {/* Row 4: Numbers */}
           <div className="grid grid-cols-2 gap-4">
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-text/40 font-bold text-xs">ODDS</span>
