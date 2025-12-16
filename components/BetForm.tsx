@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PlusCircle, Calculator, DollarSign, Camera, Loader2, Sparkles, UploadCloud, Settings2, Wand2, Tag, AlertTriangle, Calendar } from 'lucide-react';
-import { GoogleGenAI, Type, SchemaShared } from "@google/genai";
+import { PlusCircle, Calculator, DollarSign, Camera, Loader2, Settings2, Tag, AlertTriangle, Calendar } from 'lucide-react';
+import { GoogleGenAI, Type } from "@google/genai";
 import { Sportsbook, BetStatus, BookBalanceDisplay } from '../types';
 import { calculatePotentialProfit, formatCurrency } from '../utils/calculations';
 import { SPORTSBOOKS, SPORTS } from '../constants';
@@ -109,7 +109,8 @@ export const BetForm: React.FC<BetFormProps> = ({ onAddBet, currentBalance, book
       });
 
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const schema: SchemaShared = {
+      // Define schema inline to avoid type import issues
+      const schema = {
         type: Type.OBJECT,
         properties: {
           date: { type: Type.STRING },
